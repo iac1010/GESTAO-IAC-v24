@@ -617,12 +617,9 @@ export default function Quotes() {
         <div style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
           <div 
             ref={printRef}
-            className="bg-white w-[800px] text-zinc-900 font-sans relative"
-            style={{ minHeight: '1131px', padding: '0' }}
+            className="bg-white w-[794px] text-zinc-900 font-sans relative border-l-8 border-red-600"
+            style={{ padding: '0' }}
           >
-            {/* Left Vertical Brand Bar */}
-            <div className="absolute left-0 top-0 bottom-0 w-2 bg-red-600"></div>
-            
             {/* Main Content Container: Continuous Flow Design */}
             <div className="p-20 flex flex-col bg-white w-full">
               
@@ -794,6 +791,7 @@ export default function Quotes() {
                   <span>IA COMPANY TEC Cloud System</span>
                   <span>Autenticidade Garantida</span>
                 </div>
+                <div className="h-20"></div> {/* Bottom Padding for Page Breaks */}
               </div>
             </div>
           </div>

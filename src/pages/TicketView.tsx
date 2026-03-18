@@ -432,6 +432,7 @@ export default function TicketView() {
             </div>
           </div>
         ) : null}
+          <div className="h-20"></div> {/* Bottom Padding for Page Breaks */}
         </div>
       </div>
     </div>

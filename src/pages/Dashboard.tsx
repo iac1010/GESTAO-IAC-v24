@@ -6,9 +6,9 @@ import {
   Calendar as CalendarIcon, CloudSun, Image as ImageIcon,
   Settings, Moon, Sun, UserPlus, Sun as SunIcon,
   Columns, Clock, ClipboardCheck, AlertCircle, QrCode, AlertTriangle,
-  BarChart3, Droplets, Zap, ShieldCheck, Gavel, Lock, Megaphone,
+  BarChart3, Droplets, Zap, ShieldCheck, Megaphone,
   Box, UserCheck, Activity, Maximize2, CheckCircle2, Presentation, LogOut,
-  X, Download, FileUp, Database as DatabaseIcon, MessageSquare, Power
+  X, Download, FileUp, Database as DatabaseIcon, MessageSquare
 } from 'lucide-react';
 import { KanbanMirror } from '../components/KanbanMirror';
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -325,56 +325,6 @@ export default function Dashboard() {
           </div>
           <span className="hidden md:block text-[11px] font-black uppercase tracking-[0.2em] relative z-10 text-white/70">Calendário</span>
         </Link>
-      )
-    },
-    {
-      id: 'assembly',
-      type: 'wide',
-      component: (
-        <div className="w-full h-full relative group/assembly">
-          <Link to="/assembly" className="w-full h-full bg-gradient-to-br from-[#673ab7] to-[#512da8] hover:brightness-110 transition-all p-4 flex flex-col justify-between group relative overflow-hidden border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] active:scale-95 text-white">
-            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/20 pointer-events-none" />
-            <div className="flex items-start gap-4 h-full relative z-10">
-              <div className="p-2 md:p-3 bg-white/20 rounded-2xl border border-white/20 shadow-sm group-hover:scale-110 transition-transform duration-500">
-                <Gavel className="w-8 h-8 md:w-10 md:h-10 text-white" />
-              </div>
-              <div className="overflow-hidden flex-1">
-                <p className="text-[9px] md:text-[10px] font-black uppercase text-white/70 mb-1 tracking-[0.2em]">Assembleia</p>
-                <div className="space-y-1">
-                  <p className="font-black text-sm md:text-xl truncate text-white leading-tight">Sessão Ativa</p>
-                  <div className="hidden md:flex items-center gap-2 text-white/80">
-                    <Lock className="w-3 h-3" />
-                    <p className="text-xs font-medium">Votação Criptografada</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-between items-end relative z-10">
-              <span className="text-[9px] md:text-[11px] font-bold uppercase tracking-wider drop-shadow-md">Remoto</span>
-              <div className="hidden md:flex items-center gap-2 bg-white/10 px-2 py-1 rounded-lg border border-white/10">
-                <ShieldCheck className="w-3 h-3 text-white/70" />
-                <span className="text-[9px] font-bold uppercase tracking-tight text-white/70">Validade Jurídica</span>
-              </div>
-            </div>
-          </Link>
-          
-          {assemblies.some(a => a.status === 'ACTIVE') && (
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const active = assemblies.find(a => a.status === 'ACTIVE');
-                if (active && confirm('Deseja encerrar a sessão ativa agora?')) {
-                  useStore.getState().closeAssembly(active.id);
-                }
-              }}
-              className="absolute top-4 right-12 z-20 p-2 bg-red-500/20 hover:bg-red-500 text-white rounded-xl border border-white/10 opacity-0 group-hover/assembly:opacity-100 transition-all backdrop-blur-md"
-              title="Encerrar Sessão Ativa"
-            >
-              <Power className="w-4 h-4" />
-            </button>
-          )}
-        </div>
       )
     },
     {

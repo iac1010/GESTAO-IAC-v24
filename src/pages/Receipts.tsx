@@ -442,8 +442,8 @@ export default function Receipts() {
         {downloadingReceipt && (
           <div 
             ref={downloadRef}
-            className="bg-white w-[800px] p-12 text-gray-900"
-            style={{ minHeight: '1056px' }}
+            className="bg-white w-[794px] p-12 text-gray-900 border-l-8 border-red-600"
+            style={{ padding: '48px' }}
           >
             {/* Header */}
             <div className="flex justify-between items-start border-b-2 border-gray-800 pb-8 mb-8">
@@ -525,6 +525,7 @@ export default function Receipts() {
                   </div>
                 </div>
               </div>
+              <div className="h-20"></div> {/* Bottom Padding for Page Breaks */}
             </div>
           </div>
         )}
