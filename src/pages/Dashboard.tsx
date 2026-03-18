@@ -11,13 +11,6 @@ import {
   X, Download, FileUp, Database as DatabaseIcon, MessageSquare, Power
 } from 'lucide-react';
 import { KanbanMirror } from '../components/KanbanMirror';
-import { 
-  demoClients, demoProducts, demoChecklistItems, demoTickets, 
-  demoQuotes, demoReceipts, demoCosts, demoAppointments,
-  demoPayments, demoLegalAgreements, demoConsumptionReadings,
-  demoDigitalFolder, demoNotices, demoPackages, demoVisitors,
-  demoEnergyData, demoAssemblies, demoCriticalEvents, demoScheduledMaintenances
-} from '../demoData';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   DndContext, 
@@ -639,7 +632,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-4">
               <div className="text-right">
                 <p className="text-[8px] md:text-[10px] font-black uppercase text-white/50">Inadimplência</p>
-                <p className="text-sm md:text-lg font-black text-white">R$ {totalDelinquency > 0 ? totalDelinquency.toLocaleString('pt-BR') : '4.250'}</p>
+                <p className="text-sm md:text-lg font-black text-white">R$ {totalDelinquency.toLocaleString('pt-BR')}</p>
               </div>
             </div>
           </div>
@@ -839,9 +832,9 @@ export default function Dashboard() {
   const handleExportBackup = () => {
     const backupData = {
       clients,
-      checklistItems: demoChecklistItems, // Assuming we want to export these too
+      checklistItems: useStore.getState().checklistItems,
       tickets,
-      quotes: demoQuotes,
+      quotes: useStore.getState().quotes,
       receipts,
       costs,
       appointments,
@@ -885,32 +878,6 @@ export default function Dashboard() {
       reader.readAsText(file);
     }
     if (e.target) e.target.value = '';
-  };
-
-  const handleLoadDemoData = () => {
-    if (window.confirm('Isso irá substituir seus dados atuais por dados de demonstração. Deseja continuar?')) {
-      restoreData({
-        clients: demoClients,
-        products: demoProducts,
-        checklistItems: demoChecklistItems,
-        tickets: demoTickets,
-        quotes: demoQuotes,
-        receipts: demoReceipts,
-        costs: demoCosts,
-        appointments: demoAppointments,
-        payments: demoPayments,
-        legalAgreements: demoLegalAgreements,
-        consumptionReadings: demoConsumptionReadings,
-        digitalFolder: demoDigitalFolder,
-        notices: demoNotices,
-        packages: demoPackages,
-        visitors: demoVisitors,
-        energyData: demoEnergyData,
-        assemblies: demoAssemblies,
-        criticalEvents: demoCriticalEvents,
-        scheduledMaintenances: demoScheduledMaintenances
-      });
-    }
   };
 
   function handleDragEnd(event: DragEndEvent) {
@@ -1039,22 +1006,6 @@ export default function Dashboard() {
                   <div>
                     <p className="text-left">Restaurar Backup</p>
                     <p className="text-xs font-normal opacity-70">Carregar arquivo .json</p>
-                  </div>
-                </button>
-              </div>
-
-              <div className="pt-4 border-t border-gray-100 dark:border-zinc-800">
-                <button 
-                  onClick={() => {
-                    handleLoadDemoData();
-                    setShowBackupModal(false);
-                  }}
-                  className="w-full p-4 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 rounded-2xl font-bold flex items-center gap-3 transition-all active:scale-95 border border-amber-500/20"
-                >
-                  <DatabaseIcon className="w-6 h-6" />
-                  <div>
-                    <p className="text-left">Carregar Dados Demo</p>
-                    <p className="text-xs font-normal opacity-70">Substituir por dados de teste</p>
                   </div>
                 </button>
               </div>

@@ -42,33 +42,8 @@ export default function ConsumptionDashboard() {
 
   // Mock data if empty
   const displayReadings = useMemo(() => {
-    if (consumptionReadings.length > 0) return consumptionReadings;
-    
-    const mock: ConsumptionReading[] = [];
-    clients.slice(0, 5).forEach(client => {
-      ['WATER', 'GAS'].forEach(type => {
-        let prevVal = 100;
-        for (let i = 5; i >= 0; i--) {
-          const date = subMonths(new Date(), i);
-          const consumption = 5 + Math.random() * 10;
-          const currentVal = prevVal + consumption;
-          mock.push({
-            id: `mock-c-${client.id}-${type}-${i}`,
-            clientId: client.id,
-            type: type as 'WATER' | 'GAS',
-            previousValue: prevVal,
-            currentValue: currentVal,
-            consumption: consumption,
-            date: format(date, 'yyyy-MM-dd'),
-            unit: type === 'WATER' ? 'm³' : 'm³',
-            billed: i > 0
-          });
-          prevVal = currentVal;
-        }
-      });
-    });
-    return mock;
-  }, [consumptionReadings, clients]);
+    return consumptionReadings;
+  }, [consumptionReadings]);
 
   const filteredReadings = useMemo(() => {
     return displayReadings.filter(r => {

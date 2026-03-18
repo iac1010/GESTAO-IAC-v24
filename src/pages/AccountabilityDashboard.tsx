@@ -92,83 +92,20 @@ export default function AccountabilityDashboard() {
 
   // Mock folder data if empty
   const displayFolder = useMemo(() => {
-    if (digitalFolder.length > 0) return digitalFolder;
-    
-    return [
-      {
-        id: 'f1',
-        type: 'BALANCE_SHEET',
-        title: 'Folha de Pagamento - Fevereiro 2026',
-        date: '2026-03-05',
-        amount: 16000.00,
-        fileUrl: '#',
-        status: 'PENDING',
-        signatures: [
-          { id: 's1', userName: 'Carlos Oliveira', role: 'Síndico', date: '2026-03-06' }
-        ]
-      },
-      {
-        id: 'f2',
-        type: 'INVOICE',
-        title: 'Honorários Gestão - Fevereiro 2026',
-        date: '2026-03-01',
-        amount: 5000.00,
-        fileUrl: '#',
-        status: 'VALIDATED',
-        signatures: [
-          { id: 's2', userName: 'Maria Oliveira', role: 'Conselheira', date: '2026-03-02' },
-          { id: 's3', userName: 'João Pereira', role: 'Conselheiro', date: '2026-03-02' }
-        ]
-      },
-      {
-        id: 'f3',
-        type: 'TAX_DOC',
-        title: 'Encargos Sociais (FGTS/INSS) - Jan/26',
-        date: '2026-02-07',
-        amount: 4500.20,
-        fileUrl: '#',
-        status: 'VALIDATED',
-        signatures: [
-          { id: 's1', userName: 'Carlos Oliveira', role: 'Síndico', date: '2026-02-08' }
-        ]
-      },
-      {
-        id: 'f4',
-        type: 'INVOICE',
-        title: 'Contrato Manutenção Elevadores',
-        date: '2026-01-15',
-        amount: 1200.00,
-        fileUrl: '#',
-        status: 'VALIDATED',
-        signatures: []
-      }
-    ];
+    return digitalFolder;
   }, [digitalFolder]);
 
   // Mock Operational Costs Data
   const operationalCosts = useMemo(() => {
     return {
-      staff: [
-        { id: 's1', name: 'José Silva', role: 'Zelador', salary: 3500, benefits: 1200, status: 'ACTIVE' },
-        { id: 's2', name: 'Maria Santos', role: 'Aux. Limpeza', salary: 2200, benefits: 800, status: 'ACTIVE' },
-        { id: 's3', name: 'Antônio Souza', role: 'Porteiro Noturno', salary: 2800, benefits: 1000, status: 'ACTIVE' },
-        { id: 's4', name: 'Francisca Lima', role: 'Aux. Limpeza', salary: 2200, benefits: 800, status: 'ACTIVE' },
-        { id: 's5', name: 'Paulo Rocha', role: 'Manutenção', salary: 3000, benefits: 1100, status: 'ACTIVE' },
-      ],
+      staff: [],
       manager: {
-        name: 'Carlos Oliveira',
-        fee: 4500,
-        representation: 500,
+        name: '',
+        fee: 0,
+        representation: 0,
         bonus: 0
       },
-      history: [
-        { month: 'Set/25', staff: 15200, manager: 5000, others: 1200 },
-        { month: 'Out/25', staff: 15400, manager: 5000, others: 1500 },
-        { month: 'Nov/25', staff: 15200, manager: 5000, others: 1100 },
-        { month: 'Dez/25', staff: 22500, manager: 7500, others: 2000 }, // 13th salary
-        { month: 'Jan/26', staff: 15800, manager: 5000, others: 1300 },
-        { month: 'Fev/26', staff: 16000, manager: 5000, others: 1400 },
-      ]
+      history: []
     };
   }, []);
 
@@ -391,7 +328,7 @@ export default function AccountabilityDashboard() {
               <span className="text-[10px] font-black text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full">+2.5% vs Mês Ant.</span>
             </div>
             <p className="text-white/40 text-xs font-black uppercase tracking-widest mb-1">Encargos & Outros</p>
-            <h3 className="text-3xl font-black text-white">R$ 4.500</h3>
+            <h3 className="text-3xl font-black text-white">R$ 0</h3>
           </motion.div>
         </div>
 

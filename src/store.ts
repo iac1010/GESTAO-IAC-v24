@@ -3,13 +3,6 @@ import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from './lib/supabase';
 import { NBR5674_STANDARDS } from './constants/maintenance';
-import {
-  demoClients, demoProducts, demoChecklistItems, demoTickets,
-  demoQuotes, demoReceipts, demoCosts, demoAppointments,
-  demoPayments, demoLegalAgreements, demoConsumptionReadings,
-  demoDigitalFolder, demoNotices, demoPackages, demoVisitors,
-  demoEnergyData, demoAssemblies, demoCriticalEvents, demoScheduledMaintenances
-} from './demoData';
 
 export type Client = {
   id: string;
@@ -452,43 +445,38 @@ interface AppState {
 export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
-      clients: demoClients,
-      checklistItems: demoChecklistItems,
-      tickets: demoTickets,
-      quotes: demoQuotes,
-      receipts: demoReceipts,
-      costs: demoCosts,
-      appointments: demoAppointments,
-      products: demoProducts,
+      clients: [],
+      checklistItems: [],
+      tickets: [],
+      quotes: [],
+      receipts: [],
+      costs: [],
+      appointments: [],
+      products: [],
       suppliers: [],
-      supplyItems: [
-        { id: uuidv4(), name: 'Cloro Granulado 10kg', category: 'PISCINA', currentStock: 5, minStock: 2, unit: 'Balde' },
-        { id: uuidv4(), name: 'Algicida de Manutenção', category: 'PISCINA', currentStock: 3, minStock: 1, unit: 'Litro' },
-        { id: uuidv4(), name: 'Detergente Neutro 5L', category: 'LIMPEZA', currentStock: 10, minStock: 4, unit: 'Galão' },
-        { id: uuidv4(), name: 'Desinfetante 5L', category: 'LIMPEZA', currentStock: 8, minStock: 3, unit: 'Galão' },
-      ],
+      supplyItems: [],
       supplyQuotations: [],
-      payments: demoPayments,
-      legalAgreements: demoLegalAgreements,
-      scheduledMaintenances: demoScheduledMaintenances,
+      payments: [],
+      legalAgreements: [],
+      scheduledMaintenances: [],
       notifications: [],
-      consumptionReadings: demoConsumptionReadings,
-      digitalFolder: demoDigitalFolder,
-      notices: demoNotices,
-      packages: demoPackages,
-      visitors: demoVisitors,
-      criticalEvents: demoCriticalEvents,
-      energyData: demoEnergyData,
-      assemblies: demoAssemblies,
-      companyLogo: 'https://cdn-icons-png.flaticon.com/512/619/619032.png',
-      companySignature: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Signature_of_Robert_Mugabe.svg/1280px-Signature_of_Robert_Mugabe.svg.png',
+      consumptionReadings: [],
+      digitalFolder: [],
+      notices: [],
+      packages: [],
+      visitors: [],
+      criticalEvents: [],
+      energyData: [],
+      assemblies: [],
+      companyLogo: '',
+      companySignature: '',
       companyData: {
-        name: 'FLORES MANUTENÇÃO PREDIAL LTDA',
-        document: '00.123.456/0001-99',
-        phone: '(11) 4002-8922',
-        email: 'contato@floresmanutencao.com.br',
-        address: 'Av. das Indústrias, 456 - Distrito Industrial, São Paulo - SP',
-        website: 'www.floresmanutencao.com.br'
+        name: '',
+        document: '',
+        phone: '',
+        email: '',
+        address: '',
+        website: ''
       },
       theme: 'light',
       isAuthenticated: false,
@@ -499,26 +487,136 @@ export const useStore = create<AppState>()(
       fetchInitialData: async () => {
         set({ isLoading: true });
         try {
-          // Apenas buscar do Supabase se não houver clientes (para não sobrescrever os dados de demonstração)
-          if (get().clients.length === 0) {
-            const { data: clientsData, error: clientsError } = await supabase.from('clients').select('*');
-            
-            if (!clientsError && clientsData) {
-              const mappedClients: Client[] = clientsData.map(c => ({
-                id: c.id,
-                name: c.name,
-                document: c.document,
-                contactPerson: c.contact_person,
-                phone: c.phone,
-                email: c.email,
-                address: c.address,
-                notes: c.notes
-              }));
-              set({ clients: mappedClients });
-            }
+          // Fetch all data in parallel
+          const [
+            { data: clientsData },
+            { data: ticketsData },
+            { data: productsData },
+            { data: quotesData },
+            { data: receiptsData },
+            { data: costsData },
+            { data: appointmentsData },
+            { data: checklistData }
+          ] = await Promise.all([
+            supabase.from('clients').select('*'),
+            supabase.from('tickets').select('*'),
+            supabase.from('products').select('*'),
+            supabase.from('quotes').select('*'),
+            supabase.from('receipts').select('*'),
+            supabase.from('costs').select('*'),
+            supabase.from('appointments').select('*'),
+            supabase.from('checklist_items').select('*')
+          ]);
+
+          const newState: Partial<AppState> = {};
+
+          if (clientsData) {
+            newState.clients = clientsData.map(c => ({
+              id: c.id,
+              name: c.name,
+              document: c.document,
+              contactPerson: c.contact_person,
+              phone: c.phone,
+              email: c.email,
+              address: c.address,
+              notes: c.notes
+            }));
           }
+
+          if (ticketsData) {
+            newState.tickets = ticketsData.map(t => ({
+              id: t.id,
+              osNumber: t.os_number,
+              title: t.title,
+              type: t.type as TicketType,
+              status: t.status as TicketStatus,
+              maintenanceCategory: t.maintenance_category,
+              maintenanceSubcategory: t.maintenance_subcategory,
+              clientId: t.client_id,
+              date: t.date,
+              technician: t.technician,
+              observations: t.observations,
+              reportedProblem: t.reported_problem,
+              productsForQuote: t.products_for_quote,
+              serviceReport: t.service_report,
+              checklistResults: t.checklist_results,
+              images: t.images,
+              reportedBy: t.reported_by,
+              location: t.location,
+              photoBefore: t.photo_before,
+              budgetAmount: t.budget_amount,
+              budgetApproved: t.budget_approved,
+              color: t.color
+            }));
+          }
+
+          if (productsData) {
+            newState.products = productsData.map(p => ({
+              id: p.id,
+              code: p.code,
+              name: p.name,
+              description: p.description,
+              price: Number(p.price),
+              unit: p.unit
+            }));
+          }
+
+          if (quotesData) {
+            newState.quotes = quotesData.map(q => ({
+              id: q.id,
+              clientId: q.client_id,
+              date: q.date,
+              totalValue: Number(q.total_value),
+              status: q.status as any,
+              items: q.items
+            }));
+          }
+
+          if (receiptsData) {
+            newState.receipts = receiptsData.map(r => ({
+              id: r.id,
+              clientId: r.client_id,
+              date: r.date,
+              value: Number(r.value),
+              description: r.description
+            }));
+          }
+
+          if (costsData) {
+            newState.costs = costsData.map(c => ({
+              id: c.id,
+              description: c.description,
+              value: Number(c.value),
+              date: c.date,
+              category: c.category
+            }));
+          }
+
+          if (appointmentsData) {
+            newState.appointments = appointmentsData.map(a => ({
+              id: a.id,
+              title: a.title,
+              start: a.start_time,
+              end: a.end_time,
+              type: a.type as any,
+              ticketId: a.ticket_id,
+              notes: a.notes
+            }));
+          }
+
+          if (checklistData) {
+            newState.checklistItems = checklistData.map(i => ({
+              id: i.id,
+              task: i.task,
+              category: i.category,
+              clientId: i.client_id,
+              clientIds: i.client_ids
+            }));
+          }
+
+          set(newState);
         } catch (error) {
-          console.error('Erro ao buscar dados iniciais:', error);
+          console.error('Erro ao buscar dados iniciais do Supabase:', error);
         } finally {
           set({ isLoading: false });
         }
@@ -627,13 +725,43 @@ export const useStore = create<AppState>()(
         }
       },
       
-      addChecklistItem: (item) => set((state) => ({ checklistItems: [...state.checklistItems, { ...item, id: uuidv4() }] })),
-      updateChecklistItem: (id, updatedItem) => set((state) => ({
-        checklistItems: state.checklistItems.map(i => i.id === id ? { ...updatedItem, id } : i)
-      })),
-      deleteChecklistItem: (id) => set((state) => ({ checklistItems: state.checklistItems.filter(i => i.id !== id) })),
+      addChecklistItem: async (item) => {
+        const id = uuidv4();
+        const newItem = { ...item, id };
+        set((state) => ({ checklistItems: [...state.checklistItems, newItem] }));
+        
+        try {
+          await supabase.from('checklist_items').insert([{
+            task: item.task,
+            category: item.category,
+            client_id: item.clientId,
+            client_ids: item.clientIds
+          }]);
+        } catch (e) { console.error(e); }
+      },
+      updateChecklistItem: async (id, updatedItem) => {
+        set((state) => ({
+          checklistItems: state.checklistItems.map(i => i.id === id ? { ...updatedItem, id } : i)
+        }));
+        
+        try {
+          await supabase.from('checklist_items').update({
+            task: updatedItem.task,
+            category: updatedItem.category,
+            client_id: updatedItem.clientId,
+            client_ids: updatedItem.clientIds
+          }).eq('id', id);
+        } catch (e) { console.error(e); }
+      },
+      deleteChecklistItem: async (id) => {
+        set((state) => ({ checklistItems: state.checklistItems.filter(i => i.id !== id) }));
+        try {
+          await supabase.from('checklist_items').delete().eq('id', id);
+        } catch (e) { console.error(e); }
+      },
       
-      addTicket: (ticket) => set((state) => {
+      addTicket: async (ticket) => {
+        const state = get();
         let osNumber = ticket.osNumber;
         if (!osNumber && ticket.type !== 'TAREFA') {
           let maxOs = 0;
@@ -647,36 +775,229 @@ export const useStore = create<AppState>()(
           });
           osNumber = `OS-${String(maxOs + 1).padStart(4, '0')}`;
         }
-        return { tickets: [...state.tickets, { ...ticket, id: uuidv4(), osNumber }] };
-      }),
-      updateTicket: (id, updatedTicket) => set((state) => ({
-        tickets: state.tickets.map(t => t.id === id ? { ...updatedTicket, id } : t)
-      })),
-      deleteTicket: (id) => set((state) => ({ tickets: state.tickets.filter(t => t.id !== id) })),
+        
+        const id = uuidv4();
+        const newTicket = { ...ticket, id, osNumber };
+        set((state) => ({ tickets: [...state.tickets, newTicket] }));
 
-      addQuote: (quote) => set((state) => ({ quotes: [...state.quotes, { ...quote, id: uuidv4() }] })),
-      updateQuote: (id, updatedQuote) => set((state) => ({
-        quotes: state.quotes.map(q => q.id === id ? { ...updatedQuote, id } : q)
-      })),
-      deleteQuote: (id) => set((state) => ({ quotes: state.quotes.filter(q => q.id !== id) })),
+        try {
+          await supabase.from('tickets').insert([{
+            os_number: osNumber,
+            title: ticket.title,
+            type: ticket.type,
+            status: ticket.status,
+            maintenance_category: ticket.maintenanceCategory,
+            maintenance_subcategory: ticket.maintenanceSubcategory,
+            client_id: ticket.clientId,
+            date: ticket.date,
+            technician: ticket.technician,
+            observations: ticket.observations,
+            reported_problem: ticket.reportedProblem,
+            products_for_quote: ticket.productsForQuote,
+            service_report: ticket.serviceReport,
+            checklist_results: ticket.checklistResults,
+            images: ticket.images,
+            reported_by: ticket.reportedBy,
+            location: ticket.location,
+            photo_before: ticket.photoBefore,
+            budget_amount: ticket.budgetAmount,
+            budget_approved: ticket.budgetApproved,
+            color: ticket.color
+          }]);
+        } catch (e) { console.error(e); }
+      },
+      updateTicket: async (id, updatedTicket) => {
+        set((state) => ({
+          tickets: state.tickets.map(t => t.id === id ? { ...updatedTicket, id } : t)
+        }));
 
-      addReceipt: (receipt) => set((state) => ({ receipts: [...state.receipts, { ...receipt, id: uuidv4() }] })),
-      deleteReceipt: (id) => set((state) => ({ receipts: state.receipts.filter(r => r.id !== id) })),
+        try {
+          await supabase.from('tickets').update({
+            os_number: updatedTicket.osNumber,
+            title: updatedTicket.title,
+            type: updatedTicket.type,
+            status: updatedTicket.status,
+            maintenance_category: updatedTicket.maintenanceCategory,
+            maintenance_subcategory: updatedTicket.maintenanceSubcategory,
+            client_id: updatedTicket.clientId,
+            date: updatedTicket.date,
+            technician: updatedTicket.technician,
+            observations: updatedTicket.observations,
+            reported_problem: updatedTicket.reportedProblem,
+            products_for_quote: updatedTicket.productsForQuote,
+            service_report: updatedTicket.serviceReport,
+            checklist_results: updatedTicket.checklistResults,
+            images: updatedTicket.images,
+            reported_by: updatedTicket.reportedBy,
+            location: updatedTicket.location,
+            photo_before: updatedTicket.photoBefore,
+            budget_amount: updatedTicket.budgetAmount,
+            budget_approved: updatedTicket.budgetApproved,
+            color: updatedTicket.color
+          }).eq('id', id);
+        } catch (e) { console.error(e); }
+      },
+      deleteTicket: async (id) => {
+        set((state) => ({ tickets: state.tickets.filter(t => t.id !== id) }));
+        try {
+          await supabase.from('tickets').delete().eq('id', id);
+        } catch (e) { console.error(e); }
+      },
 
-      addCost: (cost) => set((state) => ({ costs: [...state.costs, { ...cost, id: uuidv4() }] })),
-      deleteCost: (id) => set((state) => ({ costs: state.costs.filter(c => c.id !== id) })),
+      addQuote: async (quote) => {
+        const id = uuidv4();
+        const newQuote = { ...quote, id };
+        set((state) => ({ quotes: [...state.quotes, newQuote] }));
 
-      addAppointment: (appointment) => set((state) => ({ appointments: [...state.appointments, { ...appointment, id: uuidv4() }] })),
-      updateAppointment: (id, updatedAppointment) => set((state) => ({
-        appointments: state.appointments.map(a => a.id === id ? { ...updatedAppointment, id } : a)
-      })),
-      deleteAppointment: (id) => set((state) => ({ appointments: state.appointments.filter(a => a.id !== id) })),
+        try {
+          await supabase.from('quotes').insert([{
+            client_id: quote.clientId,
+            date: quote.date,
+            total_value: quote.totalValue,
+            status: quote.status,
+            items: quote.items
+          }]);
+        } catch (e) { console.error(e); }
+      },
+      updateQuote: async (id, updatedQuote) => {
+        set((state) => ({
+          quotes: state.quotes.map(q => q.id === id ? { ...updatedQuote, id } : q)
+        }));
 
-      addProduct: (product) => set((state) => ({ products: [...state.products, { ...product, id: uuidv4() }] })),
-      updateProduct: (id, updatedProduct) => set((state) => ({
-        products: state.products.map(p => p.id === id ? { ...updatedProduct, id } : p)
-      })),
-      deleteProduct: (id) => set((state) => ({ products: state.products.filter(p => p.id !== id) })),
+        try {
+          await supabase.from('quotes').update({
+            client_id: updatedQuote.clientId,
+            date: updatedQuote.date,
+            total_value: updatedQuote.totalValue,
+            status: updatedQuote.status,
+            items: updatedQuote.items
+          }).eq('id', id);
+        } catch (e) { console.error(e); }
+      },
+      deleteQuote: async (id) => {
+        set((state) => ({ quotes: state.quotes.filter(q => q.id !== id) }));
+        try {
+          await supabase.from('quotes').delete().eq('id', id);
+        } catch (e) { console.error(e); }
+      },
+
+      addReceipt: async (receipt) => {
+        const id = uuidv4();
+        const newReceipt = { ...receipt, id };
+        set((state) => ({ receipts: [...state.receipts, newReceipt] }));
+
+        try {
+          await supabase.from('receipts').insert([{
+            client_id: receipt.clientId,
+            date: receipt.date,
+            value: receipt.value,
+            description: receipt.description
+          }]);
+        } catch (e) { console.error(e); }
+      },
+      deleteReceipt: async (id) => {
+        set((state) => ({ receipts: state.receipts.filter(r => r.id !== id) }));
+        try {
+          await supabase.from('receipts').delete().eq('id', id);
+        } catch (e) { console.error(e); }
+      },
+
+      addCost: async (cost) => {
+        const id = uuidv4();
+        const newCost = { ...cost, id };
+        set((state) => ({ costs: [...state.costs, newCost] }));
+
+        try {
+          await supabase.from('costs').insert([{
+            description: cost.description,
+            value: cost.value,
+            date: cost.date,
+            category: cost.category
+          }]);
+        } catch (e) { console.error(e); }
+      },
+      deleteCost: async (id) => {
+        set((state) => ({ costs: state.costs.filter(c => c.id !== id) }));
+        try {
+          await supabase.from('costs').delete().eq('id', id);
+        } catch (e) { console.error(e); }
+      },
+
+      addAppointment: async (appointment) => {
+        const id = uuidv4();
+        const newAppointment = { ...appointment, id };
+        set((state) => ({ appointments: [...state.appointments, newAppointment] }));
+
+        try {
+          await supabase.from('appointments').insert([{
+            title: appointment.title,
+            start_time: appointment.start,
+            end_time: appointment.end,
+            type: appointment.type,
+            ticket_id: appointment.ticketId,
+            notes: appointment.notes
+          }]);
+        } catch (e) { console.error(e); }
+      },
+      updateAppointment: async (id, updatedAppointment) => {
+        set((state) => ({
+          appointments: state.appointments.map(a => a.id === id ? { ...updatedAppointment, id } : a)
+        }));
+
+        try {
+          await supabase.from('appointments').update({
+            title: updatedAppointment.title,
+            start_time: updatedAppointment.start,
+            end_time: updatedAppointment.end,
+            type: updatedAppointment.type,
+            ticket_id: updatedAppointment.ticketId,
+            notes: updatedAppointment.notes
+          }).eq('id', id);
+        } catch (e) { console.error(e); }
+      },
+      deleteAppointment: async (id) => {
+        set((state) => ({ appointments: state.appointments.filter(a => a.id !== id) }));
+        try {
+          await supabase.from('appointments').delete().eq('id', id);
+        } catch (e) { console.error(e); }
+      },
+
+      addProduct: async (product) => {
+        const id = uuidv4();
+        const newProduct = { ...product, id };
+        set((state) => ({ products: [...state.products, newProduct] }));
+
+        try {
+          await supabase.from('products').insert([{
+            code: product.code,
+            name: product.name,
+            description: product.description,
+            price: product.price,
+            unit: product.unit
+          }]);
+        } catch (e) { console.error(e); }
+      },
+      updateProduct: async (id, updatedProduct) => {
+        set((state) => ({
+          products: state.products.map(p => p.id === id ? { ...updatedProduct, id } : p)
+        }));
+
+        try {
+          await supabase.from('products').update({
+            code: updatedProduct.code,
+            name: updatedProduct.name,
+            description: updatedProduct.description,
+            price: updatedProduct.price,
+            unit: updatedProduct.unit
+          }).eq('id', id);
+        } catch (e) { console.error(e); }
+      },
+      deleteProduct: async (id) => {
+        set((state) => ({ products: state.products.filter(p => p.id !== id) }));
+        try {
+          await supabase.from('products').delete().eq('id', id);
+        } catch (e) { console.error(e); }
+      },
       importProducts: (newProducts) => set((state) => ({ 
         products: [...state.products, ...newProducts.map(p => ({ ...p, id: uuidv4() }))]
       })),
