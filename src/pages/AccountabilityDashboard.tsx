@@ -486,8 +486,8 @@ export default function AccountabilityDashboard() {
                           <td className="px-8 py-6">
                             <div className="flex items-center gap-4">
                               <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
-                                item.type === 'BALANCE_SHEET' ? 'bg-blue-500/20 text-blue-400' : 
-                                item.type === 'INVOICE' ? 'bg-emerald-500/20 text-emerald-400' : 
+                                item.category === 'BALANCE_SHEET' ? 'bg-blue-500/20 text-blue-400' : 
+                                item.category === 'INVOICE' ? 'bg-emerald-500/20 text-emerald-400' : 
                                 'bg-amber-500/20 text-amber-400'
                               }`}>
                                 <FileText className="w-6 h-6" />
@@ -495,7 +495,7 @@ export default function AccountabilityDashboard() {
                               <div>
                                 <p className="font-bold text-white">{item.title}</p>
                                 <p className="text-xs text-white/40 uppercase font-black tracking-widest">
-                                  {item.type === 'BALANCE_SHEET' ? 'Balancete' : item.type === 'INVOICE' ? 'Nota Fiscal' : 'Imposto'}
+                                  {item.category === 'BALANCE_SHEET' ? 'Balancete' : item.category === 'INVOICE' ? 'Nota Fiscal' : 'Imposto'}
                                 </p>
                               </div>
                             </div>

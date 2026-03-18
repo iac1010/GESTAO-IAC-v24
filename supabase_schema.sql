@@ -272,7 +272,34 @@ CREATE TABLE IF NOT EXISTS critical_events (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 20. Tabela de Configurações da Empresa (Registro Único)
+-- 20. Tabela de Pasta Digital (Documentos)
+CREATE TABLE IF NOT EXISTS digital_folder (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT,
+  category TEXT NOT NULL,
+  date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  amount DECIMAL(12, 2),
+  file_url TEXT,
+  status TEXT NOT NULL CHECK (status IN ('PENDING', 'VALIDATED', 'REJECTED')),
+  signatures JSONB DEFAULT '[]', -- Array de objetos: [{id, userName, role, date}]
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 21. Tabela de Cotações de Suprimentos
+CREATE TABLE IF NOT EXISTS supply_quotations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  items JSONB NOT NULL, -- Array de objetos: [{supplyItemId, quantity}]
+  responses JSONB DEFAULT '{}', -- Objeto: {supplierId: {itemId: price}}
+  status TEXT NOT NULL CHECK (status IN ('OPEN', 'CLOSED')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 22. Tabela de Configurações da Empresa (Registro Único)
 CREATE TABLE IF NOT EXISTS company_settings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT,

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from './lib/supabase';
+import { toast } from 'react-hot-toast';
 import { NBR5674_STANDARDS } from './constants/maintenance';
 
 export type Client = {
@@ -243,8 +244,10 @@ export type Assembly = {
 
 export type DigitalFolderItem = {
   id: string;
-  type: 'BALANCE_SHEET' | 'INVOICE' | 'TAX_DOC';
+  clientId: string;
   title: string;
+  description: string;
+  category: string;
   date: string;
   amount?: number;
   fileUrl: string;
@@ -341,6 +344,7 @@ interface AppState {
   companyLogo: string | null;
   companySignature: string | null;
   companyData: CompanyData | null;
+  companySettingsId: string | null;
   theme: 'light' | 'dark';
   isAuthenticated: boolean;
   menuOrder: string[];
@@ -348,12 +352,12 @@ interface AppState {
   isLoading: boolean;
   
   fetchInitialData: () => Promise<void>;
-  setCompanyLogo: (logo: string | null) => void;
-  setCompanySignature: (signature: string | null) => void;
-  setCompanyData: (data: CompanyData) => void;
-  setMenuOrder: (order: string[]) => void;
+  setCompanyLogo: (logo: string | null) => Promise<void>;
+  setCompanySignature: (signature: string | null) => Promise<void>;
+  setCompanyData: (data: CompanyData) => Promise<void>;
+  setMenuOrder: (order: string[]) => Promise<void>;
   toggleTileVisibility: (tileId: string) => void;
-  toggleTheme: () => void;
+  toggleTheme: () => Promise<void>;
   login: (user: string, pass: string) => boolean;
   logout: () => void;
   
@@ -470,6 +474,7 @@ export const useStore = create<AppState>()(
       assemblies: [],
       companyLogo: '',
       companySignature: '',
+      companySettingsId: null,
       companyData: {
         name: '',
         document: '',
@@ -488,28 +493,7 @@ export const useStore = create<AppState>()(
         set({ isLoading: true });
         try {
           // Fetch all data in parallel
-          const [
-            { data: clientsData },
-            { data: ticketsData },
-            { data: productsData },
-            { data: quotesData },
-            { data: receiptsData },
-            { data: costsData },
-            { data: appointmentsData },
-            { data: checklistData },
-            { data: suppliersData },
-            { data: supplyItemsData },
-            { data: paymentsData },
-            { data: legalAgreementsData },
-            { data: scheduledMaintenancesData },
-            { data: consumptionReadingsData },
-            { data: assembliesData },
-            { data: noticesData },
-            { data: packagesData },
-            { data: visitorsData },
-            { data: criticalEventsData },
-            { data: companySettingsData }
-          ] = await Promise.all([
+          const results = await Promise.all([
             supabase.from('clients').select('*'),
             supabase.from('tickets').select('*'),
             supabase.from('products').select('*'),
@@ -529,8 +513,51 @@ export const useStore = create<AppState>()(
             supabase.from('packages').select('*'),
             supabase.from('visitors').select('*'),
             supabase.from('critical_events').select('*'),
+            supabase.from('digital_folder').select('*'),
+            supabase.from('supply_quotations').select('*'),
             supabase.from('company_settings').select('*').single()
           ]);
+
+          const [
+            clientsRes, ticketsRes, productsRes, quotesRes, receiptsRes, 
+            costsRes, appointmentsRes, checklistRes, suppliersRes, 
+            supplyItemsRes, paymentsRes, legalAgreementsRes, 
+            scheduledMaintenancesRes, consumptionReadingsRes, 
+            assembliesRes, noticesRes, packagesRes, visitorsRes, 
+            criticalEventsRes, digitalFolderRes, supplyQuotationsRes, 
+            companySettingsRes
+          ] = results;
+
+          // Check for errors
+          results.forEach((res, index) => {
+            if (res.error) {
+              console.error(`Erro ao carregar tabela (index ${index}):`, res.error);
+              if (res.error.code === '42P01') {
+                toast.error(`Tabela não encontrada no Supabase. Verifique se executou o script SQL.`);
+              }
+            }
+          });
+
+          const clientsData = clientsRes.data;
+          const ticketsData = ticketsRes.data;
+          const productsData = productsRes.data;
+          const quotesData = quotesRes.data;
+          const receiptsData = receiptsRes.data;
+          const costsData = costsRes.data;
+          const appointmentsData = appointmentsRes.data;
+          const checklistData = checklistRes.data;
+          const suppliersData = suppliersRes.data;
+          const supplyItemsData = supplyItemsRes.data;
+          const paymentsData = paymentsRes.data;
+          const legalAgreementsData = legalAgreementsRes.data;
+          const scheduledMaintenancesData = scheduledMaintenancesRes.data;
+          const consumptionReadingsData = consumptionReadingsRes.data;
+          const assembliesData = assembliesRes.data;
+          const noticesData = noticesRes.data;
+          const packagesData = packagesRes.data;
+          const visitorsData = visitorsRes.data;
+          const criticalEventsData = criticalEventsRes.data;
+          const companySettingsData = companySettingsRes.data;
 
           const newState: Partial<AppState> = {};
 
@@ -784,7 +811,33 @@ export const useStore = create<AppState>()(
             }));
           }
 
+          if (digitalFolderRes.data) {
+            newState.digitalFolder = digitalFolderRes.data.map(i => ({
+              id: i.id,
+              clientId: i.client_id,
+              title: i.title,
+              description: i.description,
+              category: i.category,
+              date: i.date,
+              amount: i.amount ? Number(i.amount) : undefined,
+              fileUrl: i.file_url,
+              status: i.status as any,
+              signatures: i.signatures
+            }));
+          }
+
+          if (supplyQuotationsRes.data) {
+            newState.supplyQuotations = supplyQuotationsRes.data.map(q => ({
+              id: q.id,
+              date: q.date,
+              items: q.items,
+              responses: q.responses,
+              status: q.status as any
+            }));
+          }
+
           if (companySettingsData) {
+            newState.companySettingsId = companySettingsData.id;
             newState.companyData = {
               name: companySettingsData.name,
               document: companySettingsData.document,
@@ -809,16 +862,64 @@ export const useStore = create<AppState>()(
         }
       },
 
-      setCompanyLogo: (logo) => set({ companyLogo: logo }),
-      setCompanySignature: (signature) => set({ companySignature: signature }),
-      setCompanyData: (data) => set({ companyData: data }),
-      setMenuOrder: (order) => set({ menuOrder: order }),
+      setCompanyLogo: async (logo) => {
+        set({ companyLogo: logo });
+        const id = get().companySettingsId;
+        if (id) {
+          try {
+            await supabase.from('company_settings').update({ logo_url: logo }).eq('id', id);
+          } catch (e) { console.error(e); }
+        }
+      },
+      setCompanySignature: async (signature) => {
+        set({ companySignature: signature });
+        const id = get().companySettingsId;
+        if (id) {
+          try {
+            await supabase.from('company_settings').update({ signature_url: signature }).eq('id', id);
+          } catch (e) { console.error(e); }
+        }
+      },
+      setCompanyData: async (data) => {
+        set({ companyData: data });
+        const id = get().companySettingsId;
+        if (id) {
+          try {
+            await supabase.from('company_settings').update({ 
+              name: data.name,
+              document: data.document,
+              phone: data.phone,
+              email: data.email,
+              address: data.address,
+              website: data.website
+            }).eq('id', id);
+          } catch (e) { console.error(e); }
+        }
+      },
+      setMenuOrder: async (order) => {
+        set({ menuOrder: order });
+        const id = get().companySettingsId;
+        if (id) {
+          try {
+            await supabase.from('company_settings').update({ menu_order: order }).eq('id', id);
+          } catch (e) { console.error(e); }
+        }
+      },
       toggleTileVisibility: (tileId) => set((state) => ({
         hiddenTiles: state.hiddenTiles.includes(tileId)
           ? state.hiddenTiles.filter(id => id !== tileId)
           : [...state.hiddenTiles, tileId]
       })),
-      toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
+      toggleTheme: async () => {
+        const newTheme = get().theme === 'light' ? 'dark' : 'light';
+        set({ theme: newTheme });
+        const id = get().companySettingsId;
+        if (id) {
+          try {
+            await supabase.from('company_settings').update({ theme: newTheme }).eq('id', id);
+          } catch (e) { console.error(e); }
+        }
+      },
       
       login: (user, pass) => {
         if (user === 'admin' && pass === '123') {
@@ -855,10 +956,17 @@ export const useStore = create<AppState>()(
           
           if (error) {
             console.error('Erro ao persistir no Supabase:', error);
-            // Opcional: Reverter estado local em caso de erro crítico
+            if (error.code === '42P01') {
+              toast.error('Tabela "clients" não encontrada. Você executou o script SQL no Supabase?');
+            } else {
+              toast.error(`Erro ao salvar no Supabase: ${error.message}`);
+            }
+          } else {
+            toast.success('Cliente salvo no Supabase com sucesso!');
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error('Erro de conexão com Supabase:', error);
+          toast.error('Erro de conexão com Supabase. Verifique suas chaves.');
         }
       },
 
@@ -919,8 +1027,16 @@ export const useStore = create<AppState>()(
             client_id: item.clientId,
             client_ids: item.clientIds
           }]);
-          if (error) console.error('Erro Supabase addChecklistItem:', error);
-        } catch (e) { console.error(e); }
+          if (error) {
+            console.error('Erro Supabase addChecklistItem:', error);
+            toast.error(`Erro ao salvar checklist: ${error.message}`);
+          } else {
+            toast.success('Checklist salvo no Supabase!');
+          }
+        } catch (e: any) { 
+          console.error(e);
+          toast.error('Erro de conexão ao salvar checklist.');
+        }
       },
       updateChecklistItem: async (id, updatedItem) => {
         set((state) => ({
@@ -988,8 +1104,16 @@ export const useStore = create<AppState>()(
             budget_approved: ticket.budgetApproved,
             color: ticket.color
           }]);
-          if (error) console.error('Erro Supabase addTicket:', error);
-        } catch (e) { console.error(e); }
+          if (error) {
+            console.error('Erro Supabase addTicket:', error);
+            toast.error(`Erro ao salvar OS: ${error.message}`);
+          } else {
+            toast.success(`OS ${osNumber || ''} salva no Supabase!`);
+          }
+        } catch (e: any) { 
+          console.error(e);
+          toast.error('Erro de conexão ao salvar OS.');
+        }
       },
       updateTicket: async (id, updatedTicket) => {
         set((state) => ({
@@ -1043,8 +1167,16 @@ export const useStore = create<AppState>()(
             status: quote.status,
             items: quote.items
           }]);
-          if (error) console.error('Erro Supabase addQuote:', error);
-        } catch (e) { console.error(e); }
+          if (error) {
+            console.error('Erro Supabase addQuote:', error);
+            toast.error(`Erro ao salvar orçamento: ${error.message}`);
+          } else {
+            toast.success('Orçamento salvo no Supabase!');
+          }
+        } catch (e: any) { 
+          console.error(e);
+          toast.error('Erro de conexão ao salvar orçamento.');
+        }
       },
       updateQuote: async (id, updatedQuote) => {
         set((state) => ({
@@ -1081,8 +1213,16 @@ export const useStore = create<AppState>()(
             value: receipt.value,
             description: receipt.description
           }]);
-          if (error) console.error('Erro Supabase addReceipt:', error);
-        } catch (e) { console.error(e); }
+          if (error) {
+            console.error('Erro Supabase addReceipt:', error);
+            toast.error(`Erro ao salvar recibo: ${error.message}`);
+          } else {
+            toast.success('Recibo salvo no Supabase!');
+          }
+        } catch (e: any) { 
+          console.error(e);
+          toast.error('Erro de conexão ao salvar recibo.');
+        }
       },
       deleteReceipt: async (id) => {
         set((state) => ({ receipts: state.receipts.filter(r => r.id !== id) }));
@@ -1104,8 +1244,16 @@ export const useStore = create<AppState>()(
             date: cost.date,
             category: cost.category
           }]);
-          if (error) console.error('Erro Supabase addCost:', error);
-        } catch (e) { console.error(e); }
+          if (error) {
+            console.error('Erro Supabase addCost:', error);
+            toast.error(`Erro ao salvar custo: ${error.message}`);
+          } else {
+            toast.success('Custo salvo no Supabase!');
+          }
+        } catch (e: any) { 
+          console.error(e);
+          toast.error('Erro de conexão ao salvar custo.');
+        }
       },
       deleteCost: async (id) => {
         set((state) => ({ costs: state.costs.filter(c => c.id !== id) }));
@@ -1129,8 +1277,16 @@ export const useStore = create<AppState>()(
             ticket_id: appointment.ticketId,
             notes: appointment.notes
           }]);
-          if (error) console.error('Erro Supabase addAppointment:', error);
-        } catch (e) { console.error(e); }
+          if (error) {
+            console.error('Erro Supabase addAppointment:', error);
+            toast.error(`Erro ao salvar compromisso: ${error.message}`);
+          } else {
+            toast.success('Compromisso salvo no Supabase!');
+          }
+        } catch (e: any) { 
+          console.error(e);
+          toast.error('Erro de conexão ao salvar compromisso.');
+        }
       },
       updateAppointment: async (id, updatedAppointment) => {
         set((state) => ({
@@ -1169,8 +1325,16 @@ export const useStore = create<AppState>()(
             price: product.price,
             unit: product.unit
           }]);
-          if (error) console.error('Erro Supabase addProduct:', error);
-        } catch (e) { console.error(e); }
+          if (error) {
+            console.error('Erro Supabase addProduct:', error);
+            toast.error(`Erro ao salvar produto: ${error.message}`);
+          } else {
+            toast.success('Produto salvo no Supabase!');
+          }
+        } catch (e: any) { 
+          console.error(e);
+          toast.error('Erro de conexão ao salvar produto.');
+        }
       },
       updateProduct: async (id, updatedProduct) => {
         set((state) => ({
@@ -1210,8 +1374,16 @@ export const useStore = create<AppState>()(
             email: supplier.email,
             category: supplier.category
           }]);
-          if (error) console.error('Erro Supabase addSupplier:', error);
-        } catch (e) { console.error(e); }
+          if (error) {
+            console.error('Erro Supabase addSupplier:', error);
+            toast.error(`Erro ao salvar fornecedor: ${error.message}`);
+          } else {
+            toast.success('Fornecedor salvo no Supabase!');
+          }
+        } catch (e: any) { 
+          console.error(e);
+          toast.error('Erro de conexão ao salvar fornecedor.');
+        }
       },
       updateSupplier: async (id, updated) => {
         set((state) => ({
@@ -1251,8 +1423,16 @@ export const useStore = create<AppState>()(
             last_price: item.lastPrice,
             client_id: item.clientId
           }]);
-          if (error) console.error('Erro Supabase addSupplyItem:', error);
-        } catch (e) { console.error(e); }
+          if (error) {
+            console.error('Erro Supabase addSupplyItem:', error);
+            toast.error(`Erro ao salvar item de suprimento: ${error.message}`);
+          } else {
+            toast.success('Item de suprimento salvo no Supabase!');
+          }
+        } catch (e: any) { 
+          console.error(e);
+          toast.error('Erro de conexão ao salvar item de suprimento.');
+        }
       },
       updateSupplyItem: async (id, updated) => {
         set((state) => ({
@@ -1291,8 +1471,9 @@ export const useStore = create<AppState>()(
         } catch (e) { console.error(e); }
       },
 
-      createQuotation: (items) => set((state) => {
+      createQuotation: async (items) => {
         const id = uuidv4();
+        const state = get();
         const relevantSuppliers = state.suppliers.filter(s => 
           items.some(qi => {
             const supplyItem = state.supplyItems.find(si => si.id === qi.supplyItemId);
@@ -1312,20 +1493,50 @@ export const useStore = create<AppState>()(
           status: 'OPEN'
         };
 
-        return { supplyQuotations: [...state.supplyQuotations, newQuotation] };
-      }),
+        set((state) => ({ supplyQuotations: [...state.supplyQuotations, newQuotation] }));
 
-      updateQuotationResponse: (quotationId, supplierId, prices) => set((state) => ({
-        supplyQuotations: state.supplyQuotations.map(q => {
-          if (q.id !== quotationId) return q;
-          return {
-            ...q,
-            responses: q.responses.map(r => 
-              r.supplierId === supplierId ? { ...r, prices, status: 'RECEIVED' } : r
-            )
-          };
-        })
-      })),
+        try {
+          const { error } = await supabase.from('supply_quotations').insert([{
+            id,
+            date: newQuotation.date,
+            items,
+            responses: newQuotation.responses,
+            status: 'OPEN'
+          }]);
+          if (error) {
+            console.error('Erro Supabase createQuotation:', error);
+            toast.error(`Erro ao criar cotação: ${error.message}`);
+          } else {
+            toast.success('Cotação criada no Supabase!');
+          }
+        } catch (e: any) { 
+          console.error(e);
+          toast.error('Erro de conexão ao criar cotação.');
+        }
+      },
+
+      updateQuotationResponse: async (quotationId, supplierId, prices) => {
+        const state = get();
+        const quotation = state.supplyQuotations.find(q => q.id === quotationId);
+        if (!quotation) return;
+
+        const newResponses = quotation.responses.map(r => 
+          r.supplierId === supplierId ? { ...r, prices, status: 'RECEIVED' as const } : r
+        );
+
+        set((state) => ({
+          supplyQuotations: state.supplyQuotations.map(q => 
+            q.id === quotationId ? { ...q, responses: newResponses } : q
+          )
+        }));
+
+        try {
+          const { error } = await supabase.from('supply_quotations').update({ 
+            responses: newResponses 
+          }).eq('id', quotationId);
+          if (error) console.error('Erro Supabase updateQuotationResponse:', error);
+        } catch (e) { console.error(e); }
+      },
 
       addPayment: async (payment) => {
         const id = uuidv4();
@@ -1341,8 +1552,16 @@ export const useStore = create<AppState>()(
             status: payment.status,
             reference: payment.reference
           }]);
-          if (error) console.error('Erro Supabase addPayment:', error);
-        } catch (e) { console.error(e); }
+          if (error) {
+            console.error('Erro Supabase addPayment:', error);
+            toast.error(`Erro ao salvar pagamento: ${error.message}`);
+          } else {
+            toast.success('Pagamento salvo no Supabase!');
+          }
+        } catch (e: any) { 
+          console.error(e);
+          toast.error('Erro de conexão ao salvar pagamento.');
+        }
       },
       updatePayment: async (id, updated) => {
         set((state) => ({
@@ -1383,8 +1602,16 @@ export const useStore = create<AppState>()(
             start_date: agreement.startDate,
             notes: agreement.notes
           }]);
-          if (error) console.error('Erro Supabase addLegalAgreement:', error);
-        } catch (e) { console.error(e); }
+          if (error) {
+            console.error('Erro Supabase addLegalAgreement:', error);
+            toast.error(`Erro ao salvar acordo: ${error.message}`);
+          } else {
+            toast.success('Acordo jurídico salvo no Supabase!');
+          }
+        } catch (e: any) { 
+          console.error(e);
+          toast.error('Erro de conexão ao salvar acordo.');
+        }
       },
       updateLegalAgreement: async (id, updated) => {
         set((state) => ({
@@ -1429,8 +1656,16 @@ export const useStore = create<AppState>()(
             status: maintenance.status,
             category: maintenance.category
           }]);
-          if (error) console.error('Erro Supabase addScheduledMaintenance:', error);
-        } catch (e) { console.error(e); }
+          if (error) {
+            console.error('Erro Supabase addScheduledMaintenance:', error);
+            toast.error(`Erro ao salvar manutenção: ${error.message}`);
+          } else {
+            toast.success('Manutenção agendada salva no Supabase!');
+          }
+        } catch (e: any) { 
+          console.error(e);
+          toast.error('Erro de conexão ao salvar manutenção.');
+        }
       },
       updateScheduledMaintenance: async (id, updated) => {
         set((state) => ({
@@ -1532,25 +1767,75 @@ export const useStore = create<AppState>()(
             unit: reading.unit,
             billed: reading.billed
           }]);
-          if (error) console.error('Erro Supabase addConsumptionReading:', error);
-        } catch (e) { console.error(e); }
+          if (error) {
+            console.error('Erro Supabase addConsumptionReading:', error);
+            toast.error(`Erro ao salvar leitura: ${error.message}`);
+          } else {
+            toast.success('Leitura de consumo salva no Supabase!');
+          }
+        } catch (e: any) { 
+          console.error(e);
+          toast.error('Erro de conexão ao salvar leitura.');
+        }
       },
       addDigitalFolderItem: async (item) => {
         const id = uuidv4();
-        const newItem: DigitalFolderItem = { ...item, id, status: 'PENDING', signatures: [] };
+        const newItem: DigitalFolderItem = { 
+          ...item, 
+          id, 
+          status: 'PENDING', 
+          signatures: [],
+          date: new Date().toISOString()
+        };
         set((state) => ({
           digitalFolder: [...state.digitalFolder, newItem]
         }));
+        try {
+          const { error } = await supabase.from('digital_folder').insert([{
+            id,
+            client_id: item.clientId,
+            title: item.title,
+            description: item.description,
+            category: item.category,
+            date: newItem.date,
+            amount: item.amount,
+            file_url: item.fileUrl,
+            status: 'PENDING',
+            signatures: []
+          }]);
+          if (error) {
+            console.error('Erro Supabase addDigitalFolderItem:', error);
+            toast.error(`Erro ao salvar documento: ${error.message}`);
+          } else {
+            toast.success('Documento salvo no Supabase!');
+          }
+        } catch (e: any) { 
+          console.error(e);
+          toast.error('Erro de conexão ao salvar documento.');
+        }
       },
-      validateDigitalFolderItem: (id, userName, role) => set((state) => ({
-        digitalFolder: state.digitalFolder.map(item => {
-          if (item.id !== id) return item;
-          const newSignature = { id: uuidv4(), userName, role, date: new Date().toISOString() };
-          const newSignatures = [...item.signatures, newSignature];
-          const newStatus = newSignatures.length >= 3 ? 'VALIDATED' : item.status;
-          return { ...item, signatures: newSignatures, status: newStatus };
-        })
-      })),
+      validateDigitalFolderItem: async (id, userName, role) => {
+        const item = get().digitalFolder.find(i => i.id === id);
+        if (!item) return;
+
+        const newSignature = { id: uuidv4(), userName, role, date: new Date().toISOString() };
+        const newSignatures = [...item.signatures, newSignature];
+        const newStatus = newSignatures.length >= 3 ? 'VALIDATED' : item.status;
+
+        set((state) => ({
+          digitalFolder: state.digitalFolder.map(i => 
+            i.id === id ? { ...i, signatures: newSignatures, status: newStatus } : i
+          )
+        }));
+
+        try {
+          const { error } = await supabase.from('digital_folder').update({ 
+            signatures: newSignatures, 
+            status: newStatus 
+          }).eq('id', id);
+          if (error) console.error('Erro Supabase validateDigitalFolderItem:', error);
+        } catch (e) { console.error(e); }
+      },
 
       addAssembly: async (assembly) => {
         const id = uuidv4();
@@ -1574,8 +1859,16 @@ export const useStore = create<AppState>()(
             votes: [],
             legal_validity_hash: newAssembly.legalValidityHash
           }]);
-          if (error) console.error('Erro Supabase addAssembly:', error);
-        } catch (e) { console.error(e); }
+          if (error) {
+            console.error('Erro Supabase addAssembly:', error);
+            toast.error(`Erro ao salvar assembleia: ${error.message}`);
+          } else {
+            toast.success('Assembleia salva no Supabase!');
+          }
+        } catch (e: any) { 
+          console.error(e);
+          toast.error('Erro de conexão ao salvar assembleia.');
+        }
       },
 
       castVote: async (assemblyId, optionId, userName) => {
@@ -1640,8 +1933,16 @@ export const useStore = create<AppState>()(
             apartment_line: notice.apartmentLine,
             client_id: notice.clientId
           }]);
-          if (error) console.error('Erro Supabase addNotice:', error);
-        } catch (e) { console.error(e); }
+          if (error) {
+            console.error('Erro Supabase addNotice:', error);
+            toast.error(`Erro ao salvar comunicado: ${error.message}`);
+          } else {
+            toast.success('Comunicado salvo no Supabase!');
+          }
+        } catch (e: any) { 
+          console.error(e);
+          toast.error('Erro de conexão ao salvar comunicado.');
+        }
       },
 
       updateNotice: async (id, updated) => {
@@ -1697,8 +1998,16 @@ export const useStore = create<AppState>()(
             photo_url: pkg.photoUrl,
             client_id: pkg.clientId
           }]);
-          if (error) console.error('Erro Supabase addPackage:', error);
-        } catch (e) { console.error(e); }
+          if (error) {
+            console.error('Erro Supabase addPackage:', error);
+            toast.error(`Erro ao salvar encomenda: ${error.message}`);
+          } else {
+            toast.success('Encomenda salva no Supabase!');
+          }
+        } catch (e: any) { 
+          console.error(e);
+          toast.error('Erro de conexão ao salvar encomenda.');
+        }
 
         get().addNotification({
           title: 'Nova Encomenda!',
@@ -1754,8 +2063,16 @@ export const useStore = create<AppState>()(
             qr_code: newVisitor.qrCode,
             status: 'ACTIVE'
           }]);
-          if (error) console.error('Erro Supabase addVisitor:', error);
-        } catch (e) { console.error(e); }
+          if (error) {
+            console.error('Erro Supabase addVisitor:', error);
+            toast.error(`Erro ao salvar visitante: ${error.message}`);
+          } else {
+            toast.success('Visitante salvo no Supabase!');
+          }
+        } catch (e: any) { 
+          console.error(e);
+          toast.error('Erro de conexão ao salvar visitante.');
+        }
       },
 
       revokeVisitor: async (id) => {
