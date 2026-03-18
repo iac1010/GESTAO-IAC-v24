@@ -3,7 +3,7 @@ import { useStore } from '../store';
 import { Download, Printer, Edit, CheckCircle2, XCircle, DollarSign, Camera, MapPin, User, MessageSquare, Plus, QrCode } from 'lucide-react';
 import { BackButton } from '../components/BackButton';
 import { useRef, useState } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
+import { QRCodeCanvas } from 'qrcode.react';
 import { generatePdf } from '../utils/pdfGenerator';
 import { toast } from 'react-hot-toast';
 
@@ -278,7 +278,7 @@ export default function TicketView() {
                 )}
               </div>
               <div className="bg-white p-2 rounded-xl border border-zinc-200 shadow-sm">
-                <QRCodeSVG 
+                <QRCodeCanvas 
                   value={`${window.location.origin}/tickets/${ticket.id}`} 
                   size={64}
                   level="H"

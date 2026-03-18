@@ -1,8 +1,9 @@
-import html2pdf from 'html2pdf.js';
+import { jsPDF } from 'jspdf';
+import { toCanvas } from 'html-to-image';
 
 export async function generatePdf(element: HTMLElement, fileName: string, format: string = 'a4') {
   try {
-    console.log(`Iniciando geração de PDF (Motor: html2pdf.js, Formato: ${format}) para:`, fileName);
+    console.log(`Iniciando geração de PDF (Motor: html-to-image + jsPDF, Formato: ${format}) para:`, fileName);
     
     // Garantir que as imagens estão carregadas
     const images = Array.from(element.getElementsByTagName('img'));
@@ -14,66 +15,52 @@ export async function generatePdf(element: HTMLElement, fileName: string, format
       });
     }));
 
-    // Pequeno delay para estabilização
-    await new Promise(resolve => setTimeout(resolve, 800));
+    // Pequeno delay para estabilização e renderização completa
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
-    const opt = {
-      margin: [10, 10, 10, 10] as [number, number, number, number],
-      filename: fileName,
-      image: { type: 'jpeg' as const, quality: 0.98 },
-      html2canvas: { 
-        scale: 2, 
-        useCORS: true, 
-        letterRendering: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        scrollY: 0,
-        scrollX: 0,
-        // Tentar forçar a remoção de oklch/oklab se ele ainda estiver presente
-        onclone: (clonedDoc: Document) => {
-          // Remover QUALQUER tag de estilo que possa conter oklch/oklab e substituir por cores seguras
-          const styles = clonedDoc.getElementsByTagName('style');
-          for (let i = 0; i < styles.length; i++) {
-            let css = styles[i].innerHTML;
-            if (css.includes('oklch') || css.includes('oklab') || css.includes('color-mix')) {
-              // Substituição agressiva de oklch/oklab por cores hex aproximadas
-              css = css.replace(/color-mix\([^)]+\)/g, '#71717a');
-              css = css.replace(/oklch\([^)]+\)/g, '#71717a');
-              css = css.replace(/oklab\([^)]+\)/g, '#71717a');
-              styles[i].innerHTML = css;
-            }
-          }
-          
-          // Limpar estilos inline em todos os elementos
-          const all = clonedDoc.getElementsByTagName('*');
-          for (let i = 0; i < all.length; i++) {
-            const el = all[i] as HTMLElement;
-            const inlineStyle = el.getAttribute('style');
-            if (inlineStyle && (inlineStyle.includes('oklch') || inlineStyle.includes('oklab') || inlineStyle.includes('color-mix'))) {
-              let newStyle = inlineStyle.replace(/color-mix\([^)]+\)/g, '#71717a');
-              newStyle = newStyle.replace(/oklch\([^)]+\)/g, '#71717a');
-              newStyle = newStyle.replace(/oklab\([^)]+\)/g, '#71717a');
-              el.setAttribute('style', newStyle);
-            }
-            
-            // Forçar background branco e texto preto se necessário para garantir contraste
-            if (el.classList.contains('bg-white')) el.style.backgroundColor = '#ffffff';
-            if (el.classList.contains('text-zinc-900')) el.style.color = '#18181b';
-          }
-        }
-      },
-      jsPDF: { unit: 'mm', format: format, orientation: 'portrait' as const },
-      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-    };
+    // Captura o elemento como canvas usando html-to-image (mais robusto que html2canvas para CSS moderno)
+    const canvas = await toCanvas(element, {
+      backgroundColor: '#ffffff',
+      pixelRatio: 2,
+      skipFonts: false,
+      fontEmbedCSS: '',
+      style: {
+        transform: 'scale(1)',
+        transformOrigin: 'top left',
+      }
+    });
 
-    // Gerar e baixar
-    console.log('Renderizando documento...');
-    await html2pdf().set(opt).from(element).save();
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const pdf = new jsPDF('p', 'mm', format as any);
     
-    console.log('PDF gerado e download iniciado');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    
+    const imgProps = pdf.getImageProperties(imgData);
+    const margin = 10; // 10mm de margem
+    const contentWidth = pdfWidth - (margin * 2);
+    const contentHeight = (imgProps.height * contentWidth) / imgProps.width;
+    
+    let heightLeft = contentHeight;
+    let position = margin;
+
+    // Adiciona a primeira página
+    pdf.addImage(imgData, 'JPEG', margin, position, contentWidth, contentHeight);
+    heightLeft -= (pdfHeight - (margin * 2));
+
+    // Adiciona páginas subsequentes se o conteúdo for maior que uma página
+    while (heightLeft > 0) {
+      position = heightLeft - contentHeight + margin;
+      pdf.addPage();
+      pdf.addImage(imgData, 'JPEG', margin, position, contentWidth, contentHeight);
+      heightLeft -= (pdfHeight - (margin * 2));
+    }
+
+    pdf.save(fileName);
+    console.log('PDF gerado com sucesso via html-to-image + jsPDF');
     return true;
   } catch (error) {
-    console.error('Erro crítico no motor html2pdf:', error);
+    console.error('Erro crítico na geração do PDF:', error);
     throw new Error(error instanceof Error ? error.message : 'Falha na geração do PDF');
   }
 }
