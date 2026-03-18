@@ -496,7 +496,19 @@ export const useStore = create<AppState>()(
             { data: receiptsData },
             { data: costsData },
             { data: appointmentsData },
-            { data: checklistData }
+            { data: checklistData },
+            { data: suppliersData },
+            { data: supplyItemsData },
+            { data: paymentsData },
+            { data: legalAgreementsData },
+            { data: scheduledMaintenancesData },
+            { data: consumptionReadingsData },
+            { data: assembliesData },
+            { data: noticesData },
+            { data: packagesData },
+            { data: visitorsData },
+            { data: criticalEventsData },
+            { data: companySettingsData }
           ] = await Promise.all([
             supabase.from('clients').select('*'),
             supabase.from('tickets').select('*'),
@@ -505,7 +517,19 @@ export const useStore = create<AppState>()(
             supabase.from('receipts').select('*'),
             supabase.from('costs').select('*'),
             supabase.from('appointments').select('*'),
-            supabase.from('checklist_items').select('*')
+            supabase.from('checklist_items').select('*'),
+            supabase.from('suppliers').select('*'),
+            supabase.from('supply_items').select('*'),
+            supabase.from('payments').select('*'),
+            supabase.from('legal_agreements').select('*'),
+            supabase.from('scheduled_maintenances').select('*'),
+            supabase.from('consumption_readings').select('*'),
+            supabase.from('assemblies').select('*'),
+            supabase.from('notices').select('*'),
+            supabase.from('packages').select('*'),
+            supabase.from('visitors').select('*'),
+            supabase.from('critical_events').select('*'),
+            supabase.from('company_settings').select('*').single()
           ]);
 
           const newState: Partial<AppState> = {};
@@ -614,6 +638,169 @@ export const useStore = create<AppState>()(
             }));
           }
 
+          if (suppliersData) {
+            newState.suppliers = suppliersData.map(s => ({
+              id: s.id,
+              name: s.name,
+              contact: s.contact,
+              phone: s.phone,
+              email: s.email,
+              category: s.category
+            }));
+          }
+
+          if (supplyItemsData) {
+            newState.supplyItems = supplyItemsData.map(i => ({
+              id: i.id,
+              name: i.name,
+              category: i.category,
+              currentStock: i.current_stock,
+              minStock: i.min_stock,
+              unit: i.unit,
+              lastPrice: i.last_price ? Number(i.last_price) : undefined,
+              clientId: i.client_id
+            }));
+          }
+
+          if (paymentsData) {
+            newState.payments = paymentsData.map(p => ({
+              id: p.id,
+              clientId: p.client_id,
+              amount: Number(p.amount),
+              dueDate: p.due_date,
+              paymentDate: p.payment_date,
+              status: p.status as any,
+              reference: p.reference
+            }));
+          }
+
+          if (legalAgreementsData) {
+            newState.legalAgreements = legalAgreementsData.map(a => ({
+              id: a.id,
+              clientId: a.client_id,
+              totalAmount: Number(a.total_amount),
+              installments: a.installments,
+              remainingInstallments: a.remaining_installments,
+              status: a.status as any,
+              startDate: a.start_date,
+              notes: a.notes
+            }));
+          }
+
+          if (scheduledMaintenancesData) {
+            newState.scheduledMaintenances = scheduledMaintenancesData.map(m => ({
+              id: m.id,
+              clientId: m.client_id,
+              standardId: m.standard_id,
+              item: m.item,
+              frequency: m.frequency,
+              lastDone: m.last_done,
+              nextDate: m.next_date,
+              status: m.status as any,
+              category: m.category
+            }));
+          }
+
+          if (consumptionReadingsData) {
+            newState.consumptionReadings = consumptionReadingsData.map(r => ({
+              id: r.id,
+              clientId: r.client_id,
+              type: r.type as any,
+              previousValue: Number(r.previous_value),
+              currentValue: Number(r.current_value),
+              consumption: Number(r.consumption),
+              date: r.date,
+              unit: r.unit,
+              billed: r.billed
+            }));
+          }
+
+          if (assembliesData) {
+            newState.assemblies = assembliesData.map(a => ({
+              id: a.id,
+              title: a.title,
+              description: a.description,
+              date: a.date,
+              status: a.status as any,
+              options: a.options,
+              votes: a.votes,
+              legalValidityHash: a.legal_validity_hash
+            }));
+          }
+
+          if (noticesData) {
+            newState.notices = noticesData.map(n => ({
+              id: n.id,
+              title: n.title,
+              content: n.content,
+              date: n.date,
+              category: n.category as any,
+              tower: n.tower,
+              apartmentLine: n.apartment_line,
+              clientId: n.client_id
+            }));
+          }
+
+          if (packagesData) {
+            newState.packages = packagesData.map(p => ({
+              id: p.id,
+              residentName: p.resident_name,
+              apartment: p.apartment,
+              tower: p.tower,
+              carrier: p.carrier,
+              trackingCode: p.tracking_code,
+              receivedAt: p.received_at,
+              pickedUpAt: p.picked_up_at,
+              status: p.status as any,
+              qrCode: p.qr_code,
+              photoUrl: p.photo_url,
+              clientId: p.client_id
+            }));
+          }
+
+          if (visitorsData) {
+            newState.visitors = visitorsData.map(v => ({
+              id: v.id,
+              name: v.name,
+              document: v.document,
+              type: v.type as any,
+              apartment: v.apartment,
+              tower: v.tower,
+              validUntil: v.valid_until,
+              qrCode: v.qr_code,
+              status: v.status as any
+            }));
+          }
+
+          if (criticalEventsData) {
+            newState.criticalEvents = criticalEventsData.map(e => ({
+              id: e.id,
+              device: e.device,
+              location: e.location,
+              type: e.type as any,
+              status: e.status as any,
+              lastUpdate: e.last_update,
+              description: e.description
+            }));
+          }
+
+          if (companySettingsData) {
+            newState.companyData = {
+              name: companySettingsData.name,
+              document: companySettingsData.document,
+              phone: companySettingsData.phone,
+              email: companySettingsData.email,
+              address: companySettingsData.address,
+              website: companySettingsData.website
+            };
+            newState.companyLogo = companySettingsData.logo_url;
+            newState.companySignature = companySettingsData.signature_url;
+            newState.theme = companySettingsData.theme as any;
+            if (companySettingsData.menu_order) {
+              newState.menuOrder = companySettingsData.menu_order;
+            }
+          }
+
           set(newState);
         } catch (error) {
           console.error('Erro ao buscar dados iniciais do Supabase:', error);
@@ -654,6 +841,7 @@ export const useStore = create<AppState>()(
         // 2. Tenta persistir no Supabase
         try {
           const dbClient = {
+            id, // Inclui o ID gerado localmente
             name: client.name,
             document: client.document,
             contact_person: client.contactPerson,
@@ -663,21 +851,14 @@ export const useStore = create<AppState>()(
             notes: client.notes
           };
 
-          const { data, error } = await supabase.from('clients').insert([dbClient]).select().single();
+          const { error } = await supabase.from('clients').insert([dbClient]);
           
           if (error) {
-            console.warn('Erro ao persistir no Supabase, mantendo apenas local:', error);
-            return;
-          }
-
-          // Se o Supabase retornou um ID diferente (ou o mesmo), atualizamos se necessário
-          if (data && data.id !== id) {
-            set((state) => ({
-              clients: state.clients.map(c => c.id === id ? { ...newClient, id: data.id } : c)
-            }));
+            console.error('Erro ao persistir no Supabase:', error);
+            // Opcional: Reverter estado local em caso de erro crítico
           }
         } catch (error) {
-          console.warn('Erro de conexão com Supabase, mantendo apenas local:', error);
+          console.error('Erro de conexão com Supabase:', error);
         }
       },
 
@@ -731,12 +912,14 @@ export const useStore = create<AppState>()(
         set((state) => ({ checklistItems: [...state.checklistItems, newItem] }));
         
         try {
-          await supabase.from('checklist_items').insert([{
+          const { error } = await supabase.from('checklist_items').insert([{
+            id,
             task: item.task,
             category: item.category,
             client_id: item.clientId,
             client_ids: item.clientIds
           }]);
+          if (error) console.error('Erro Supabase addChecklistItem:', error);
         } catch (e) { console.error(e); }
       },
       updateChecklistItem: async (id, updatedItem) => {
@@ -781,7 +964,8 @@ export const useStore = create<AppState>()(
         set((state) => ({ tickets: [...state.tickets, newTicket] }));
 
         try {
-          await supabase.from('tickets').insert([{
+          const { error } = await supabase.from('tickets').insert([{
+            id,
             os_number: osNumber,
             title: ticket.title,
             type: ticket.type,
@@ -804,6 +988,7 @@ export const useStore = create<AppState>()(
             budget_approved: ticket.budgetApproved,
             color: ticket.color
           }]);
+          if (error) console.error('Erro Supabase addTicket:', error);
         } catch (e) { console.error(e); }
       },
       updateTicket: async (id, updatedTicket) => {
@@ -850,13 +1035,15 @@ export const useStore = create<AppState>()(
         set((state) => ({ quotes: [...state.quotes, newQuote] }));
 
         try {
-          await supabase.from('quotes').insert([{
+          const { error } = await supabase.from('quotes').insert([{
+            id,
             client_id: quote.clientId,
             date: quote.date,
             total_value: quote.totalValue,
             status: quote.status,
             items: quote.items
           }]);
+          if (error) console.error('Erro Supabase addQuote:', error);
         } catch (e) { console.error(e); }
       },
       updateQuote: async (id, updatedQuote) => {
@@ -887,12 +1074,14 @@ export const useStore = create<AppState>()(
         set((state) => ({ receipts: [...state.receipts, newReceipt] }));
 
         try {
-          await supabase.from('receipts').insert([{
+          const { error } = await supabase.from('receipts').insert([{
+            id,
             client_id: receipt.clientId,
             date: receipt.date,
             value: receipt.value,
             description: receipt.description
           }]);
+          if (error) console.error('Erro Supabase addReceipt:', error);
         } catch (e) { console.error(e); }
       },
       deleteReceipt: async (id) => {
@@ -908,12 +1097,14 @@ export const useStore = create<AppState>()(
         set((state) => ({ costs: [...state.costs, newCost] }));
 
         try {
-          await supabase.from('costs').insert([{
+          const { error } = await supabase.from('costs').insert([{
+            id,
             description: cost.description,
             value: cost.value,
             date: cost.date,
             category: cost.category
           }]);
+          if (error) console.error('Erro Supabase addCost:', error);
         } catch (e) { console.error(e); }
       },
       deleteCost: async (id) => {
@@ -929,7 +1120,8 @@ export const useStore = create<AppState>()(
         set((state) => ({ appointments: [...state.appointments, newAppointment] }));
 
         try {
-          await supabase.from('appointments').insert([{
+          const { error } = await supabase.from('appointments').insert([{
+            id,
             title: appointment.title,
             start_time: appointment.start,
             end_time: appointment.end,
@@ -937,6 +1129,7 @@ export const useStore = create<AppState>()(
             ticket_id: appointment.ticketId,
             notes: appointment.notes
           }]);
+          if (error) console.error('Erro Supabase addAppointment:', error);
         } catch (e) { console.error(e); }
       },
       updateAppointment: async (id, updatedAppointment) => {
@@ -968,13 +1161,15 @@ export const useStore = create<AppState>()(
         set((state) => ({ products: [...state.products, newProduct] }));
 
         try {
-          await supabase.from('products').insert([{
+          const { error } = await supabase.from('products').insert([{
+            id,
             code: product.code,
             name: product.name,
             description: product.description,
             price: product.price,
             unit: product.unit
           }]);
+          if (error) console.error('Erro Supabase addProduct:', error);
         } catch (e) { console.error(e); }
       },
       updateProduct: async (id, updatedProduct) => {
@@ -1002,20 +1197,99 @@ export const useStore = create<AppState>()(
         products: [...state.products, ...newProducts.map(p => ({ ...p, id: uuidv4() }))]
       })),
 
-      addSupplier: (supplier) => set((state) => ({ suppliers: [...state.suppliers, { ...supplier, id: uuidv4() }] })),
-      updateSupplier: (id, updated) => set((state) => ({
-        suppliers: state.suppliers.map(s => s.id === id ? { ...updated, id } : s)
-      })),
-      deleteSupplier: (id) => set((state) => ({ suppliers: state.suppliers.filter(s => s.id !== id) })),
+      addSupplier: async (supplier) => {
+        const id = uuidv4();
+        const newSupplier = { ...supplier, id };
+        set((state) => ({ suppliers: [...state.suppliers, newSupplier] }));
+        try {
+          const { error } = await supabase.from('suppliers').insert([{
+            id,
+            name: supplier.name,
+            contact: supplier.contact,
+            phone: supplier.phone,
+            email: supplier.email,
+            category: supplier.category
+          }]);
+          if (error) console.error('Erro Supabase addSupplier:', error);
+        } catch (e) { console.error(e); }
+      },
+      updateSupplier: async (id, updated) => {
+        set((state) => ({
+          suppliers: state.suppliers.map(s => s.id === id ? { ...updated, id } : s)
+        }));
+        try {
+          const { error } = await supabase.from('suppliers').update({
+            name: updated.name,
+            contact: updated.contact,
+            phone: updated.phone,
+            email: updated.email,
+            category: updated.category
+          }).eq('id', id);
+          if (error) console.error('Erro Supabase updateSupplier:', error);
+        } catch (e) { console.error(e); }
+      },
+      deleteSupplier: async (id) => {
+        set((state) => ({ suppliers: state.suppliers.filter(s => s.id !== id) }));
+        try {
+          const { error } = await supabase.from('suppliers').delete().eq('id', id);
+          if (error) console.error('Erro Supabase deleteSupplier:', error);
+        } catch (e) { console.error(e); }
+      },
 
-      addSupplyItem: (item) => set((state) => ({ supplyItems: [...state.supplyItems, { ...item, id: uuidv4() }] })),
-      updateSupplyItem: (id, updated) => set((state) => ({
-        supplyItems: state.supplyItems.map(i => i.id === id ? { ...updated, id } : i)
-      })),
-      deleteSupplyItem: (id) => set((state) => ({ supplyItems: state.supplyItems.filter(i => i.id !== id) })),
-      updateStock: (id, quantity) => set((state) => ({
-        supplyItems: state.supplyItems.map(i => i.id === id ? { ...i, currentStock: i.currentStock + quantity } : i)
-      })),
+      addSupplyItem: async (item) => {
+        const id = uuidv4();
+        const newItem = { ...item, id };
+        set((state) => ({ supplyItems: [...state.supplyItems, newItem] }));
+        try {
+          const { error } = await supabase.from('supply_items').insert([{
+            id,
+            name: item.name,
+            category: item.category,
+            current_stock: item.currentStock,
+            min_stock: item.minStock,
+            unit: item.unit,
+            last_price: item.lastPrice,
+            client_id: item.clientId
+          }]);
+          if (error) console.error('Erro Supabase addSupplyItem:', error);
+        } catch (e) { console.error(e); }
+      },
+      updateSupplyItem: async (id, updated) => {
+        set((state) => ({
+          supplyItems: state.supplyItems.map(i => i.id === id ? { ...updated, id } : i)
+        }));
+        try {
+          const { error } = await supabase.from('supply_items').update({
+            name: updated.name,
+            category: updated.category,
+            current_stock: updated.currentStock,
+            min_stock: updated.minStock,
+            unit: updated.unit,
+            last_price: updated.lastPrice,
+            client_id: updated.clientId
+          }).eq('id', id);
+          if (error) console.error('Erro Supabase updateSupplyItem:', error);
+        } catch (e) { console.error(e); }
+      },
+      deleteSupplyItem: async (id) => {
+        set((state) => ({ supplyItems: state.supplyItems.filter(i => i.id !== id) }));
+        try {
+          const { error } = await supabase.from('supply_items').delete().eq('id', id);
+          if (error) console.error('Erro Supabase deleteSupplyItem:', error);
+        } catch (e) { console.error(e); }
+      },
+      updateStock: async (id, quantity) => {
+        const item = get().supplyItems.find(i => i.id === id);
+        if (!item) return;
+        const newStock = item.currentStock + quantity;
+        set((state) => ({
+          supplyItems: state.supplyItems.map(i => i.id === id ? { ...i, currentStock: newStock } : i)
+        }));
+        try {
+          const { error } = await supabase.from('supply_items').update({ current_stock: newStock }).eq('id', id);
+          if (error) console.error('Erro Supabase updateStock:', error);
+        } catch (e) { console.error(e); }
+      },
 
       createQuotation: (items) => set((state) => {
         const id = uuidv4();
@@ -1053,28 +1327,139 @@ export const useStore = create<AppState>()(
         })
       })),
 
-      addPayment: (payment) => set((state) => ({ payments: [...state.payments, { ...payment, id: uuidv4() }] })),
-      updatePayment: (id, updated) => set((state) => ({
-        payments: state.payments.map(p => p.id === id ? { ...p, ...updated } : p)
-      })),
-      deletePayment: (id) => set((state) => ({ payments: state.payments.filter(p => p.id !== id) })),
+      addPayment: async (payment) => {
+        const id = uuidv4();
+        const newPayment = { ...payment, id };
+        set((state) => ({ payments: [...state.payments, newPayment] }));
+        try {
+          const { error } = await supabase.from('payments').insert([{
+            id,
+            client_id: payment.clientId,
+            amount: payment.amount,
+            due_date: payment.dueDate,
+            payment_date: payment.paymentDate,
+            status: payment.status,
+            reference: payment.reference
+          }]);
+          if (error) console.error('Erro Supabase addPayment:', error);
+        } catch (e) { console.error(e); }
+      },
+      updatePayment: async (id, updated) => {
+        set((state) => ({
+          payments: state.payments.map(p => p.id === id ? { ...p, ...updated } : p)
+        }));
+        try {
+          const { error } = await supabase.from('payments').update({
+            client_id: updated.clientId,
+            amount: updated.amount,
+            due_date: updated.dueDate,
+            payment_date: updated.paymentDate,
+            status: updated.status,
+            reference: updated.reference
+          }).eq('id', id);
+          if (error) console.error('Erro Supabase updatePayment:', error);
+        } catch (e) { console.error(e); }
+      },
+      deletePayment: async (id) => {
+        set((state) => ({ payments: state.payments.filter(p => p.id !== id) }));
+        try {
+          const { error } = await supabase.from('payments').delete().eq('id', id);
+          if (error) console.error('Erro Supabase deletePayment:', error);
+        } catch (e) { console.error(e); }
+      },
 
-      addLegalAgreement: (agreement) => set((state) => ({ legalAgreements: [...state.legalAgreements, { ...agreement, id: uuidv4() }] })),
-      updateLegalAgreement: (id, updated) => set((state) => ({
-        legalAgreements: state.legalAgreements.map(a => a.id === id ? { ...a, ...updated } : a)
-      })),
-      deleteLegalAgreement: (id) => set((state) => ({ legalAgreements: state.legalAgreements.filter(a => a.id !== id) })),
+      addLegalAgreement: async (agreement) => {
+        const id = uuidv4();
+        const newAgreement = { ...agreement, id };
+        set((state) => ({ legalAgreements: [...state.legalAgreements, newAgreement] }));
+        try {
+          const { error } = await supabase.from('legal_agreements').insert([{
+            id,
+            client_id: agreement.clientId,
+            total_amount: agreement.totalAmount,
+            installments: agreement.installments,
+            remaining_installments: agreement.remainingInstallments,
+            status: agreement.status,
+            start_date: agreement.startDate,
+            notes: agreement.notes
+          }]);
+          if (error) console.error('Erro Supabase addLegalAgreement:', error);
+        } catch (e) { console.error(e); }
+      },
+      updateLegalAgreement: async (id, updated) => {
+        set((state) => ({
+          legalAgreements: state.legalAgreements.map(a => a.id === id ? { ...a, ...updated } : a)
+        }));
+        try {
+          const { error } = await supabase.from('legal_agreements').update({
+            client_id: updated.clientId,
+            total_amount: updated.totalAmount,
+            installments: updated.installments,
+            remaining_installments: updated.remainingInstallments,
+            status: updated.status,
+            start_date: updated.startDate,
+            notes: updated.notes
+          }).eq('id', id);
+          if (error) console.error('Erro Supabase updateLegalAgreement:', error);
+        } catch (e) { console.error(e); }
+      },
+      deleteLegalAgreement: async (id) => {
+        set((state) => ({ legalAgreements: state.legalAgreements.filter(a => a.id !== id) }));
+        try {
+          const { error } = await supabase.from('legal_agreements').delete().eq('id', id);
+          if (error) console.error('Erro Supabase deleteLegalAgreement:', error);
+        } catch (e) { console.error(e); }
+      },
       
-      addScheduledMaintenance: (maintenance) => set((state) => ({
-        scheduledMaintenances: [...state.scheduledMaintenances, { ...maintenance, id: uuidv4() }]
-      })),
-      updateScheduledMaintenance: (id, updated) => set((state) => ({
-        scheduledMaintenances: state.scheduledMaintenances.map(m => m.id === id ? { ...m, ...updated } : m)
-      })),
-      deleteScheduledMaintenance: (id) => set((state) => ({
-        scheduledMaintenances: state.scheduledMaintenances.filter(m => m.id !== id)
-      })),
-      generateSchedulesForClient: (clientId) => {
+      addScheduledMaintenance: async (maintenance) => {
+        const id = uuidv4();
+        const newMaintenance = { ...maintenance, id };
+        set((state) => ({
+          scheduledMaintenances: [...state.scheduledMaintenances, newMaintenance]
+        }));
+        try {
+          const { error } = await supabase.from('scheduled_maintenances').insert([{
+            id,
+            client_id: maintenance.clientId,
+            standard_id: maintenance.standardId,
+            item: maintenance.item,
+            frequency: maintenance.frequency,
+            last_done: maintenance.lastDone,
+            next_date: maintenance.nextDate,
+            status: maintenance.status,
+            category: maintenance.category
+          }]);
+          if (error) console.error('Erro Supabase addScheduledMaintenance:', error);
+        } catch (e) { console.error(e); }
+      },
+      updateScheduledMaintenance: async (id, updated) => {
+        set((state) => ({
+          scheduledMaintenances: state.scheduledMaintenances.map(m => m.id === id ? { ...m, ...updated } : m)
+        }));
+        try {
+          const { error } = await supabase.from('scheduled_maintenances').update({
+            client_id: updated.clientId,
+            standard_id: updated.standardId,
+            item: updated.item,
+            frequency: updated.frequency,
+            last_done: updated.lastDone,
+            next_date: updated.nextDate,
+            status: updated.status,
+            category: updated.category
+          }).eq('id', id);
+          if (error) console.error('Erro Supabase updateScheduledMaintenance:', error);
+        } catch (e) { console.error(e); }
+      },
+      deleteScheduledMaintenance: async (id) => {
+        set((state) => ({
+          scheduledMaintenances: state.scheduledMaintenances.filter(m => m.id !== id)
+        }));
+        try {
+          const { error } = await supabase.from('scheduled_maintenances').delete().eq('id', id);
+          if (error) console.error('Erro Supabase deleteScheduledMaintenance:', error);
+        } catch (e) { console.error(e); }
+      },
+      generateSchedulesForClient: async (clientId) => {
         const newSchedules: ScheduledMaintenance[] = NBR5674_STANDARDS.map((std: any) => {
           const nextDate = new Date();
           if (std.frequency === 'Mensal') nextDate.setMonth(nextDate.getMonth() + 1);
@@ -1100,6 +1485,22 @@ export const useStore = create<AppState>()(
             ...newSchedules
           ]
         }));
+
+        try {
+          // Remove antigos e insere novos no Supabase
+          await supabase.from('scheduled_maintenances').delete().eq('client_id', clientId);
+          const { error } = await supabase.from('scheduled_maintenances').insert(newSchedules.map(m => ({
+            id: m.id,
+            client_id: m.clientId,
+            standard_id: m.standardId,
+            item: m.item,
+            frequency: m.frequency,
+            next_date: m.nextDate,
+            status: m.status,
+            category: m.category
+          })));
+          if (error) console.error('Erro Supabase generateSchedulesForClient:', error);
+        } catch (e) { console.error(e); }
       },
 
       addNotification: (notif) => set((state) => ({
@@ -1113,12 +1514,34 @@ export const useStore = create<AppState>()(
       })),
       clearNotifications: () => set({ notifications: [] }),
 
-      addConsumptionReading: (reading) => set((state) => ({
-        consumptionReadings: [...state.consumptionReadings, { ...reading, id: uuidv4() }]
-      })),
-      addDigitalFolderItem: (item) => set((state) => ({
-        digitalFolder: [...state.digitalFolder, { ...item, id: uuidv4(), status: 'PENDING', signatures: [] }]
-      })),
+      addConsumptionReading: async (reading) => {
+        const id = uuidv4();
+        const newReading = { ...reading, id };
+        set((state) => ({
+          consumptionReadings: [...state.consumptionReadings, newReading]
+        }));
+        try {
+          const { error } = await supabase.from('consumption_readings').insert([{
+            id,
+            client_id: reading.clientId,
+            type: reading.type,
+            previous_value: reading.previousValue,
+            current_value: reading.currentValue,
+            consumption: reading.consumption,
+            date: reading.date,
+            unit: reading.unit,
+            billed: reading.billed
+          }]);
+          if (error) console.error('Erro Supabase addConsumptionReading:', error);
+        } catch (e) { console.error(e); }
+      },
+      addDigitalFolderItem: async (item) => {
+        const id = uuidv4();
+        const newItem: DigitalFolderItem = { ...item, id, status: 'PENDING', signatures: [] };
+        set((state) => ({
+          digitalFolder: [...state.digitalFolder, newItem]
+        }));
+      },
       validateDigitalFolderItem: (id, userName, role) => set((state) => ({
         digitalFolder: state.digitalFolder.map(item => {
           if (item.id !== id) return item;
@@ -1129,57 +1552,126 @@ export const useStore = create<AppState>()(
         })
       })),
 
-      addAssembly: (assembly) => set((state) => ({
-        assemblies: [
-          ...state.assemblies,
-          {
-            ...assembly,
-            id: uuidv4(),
+      addAssembly: async (assembly) => {
+        const id = uuidv4();
+        const newAssembly = {
+          ...assembly,
+          id,
+          votes: [],
+          legalValidityHash: `SHA256-${uuidv4().substring(0, 8).toUpperCase()}`
+        };
+        set((state) => ({
+          assemblies: [...state.assemblies, newAssembly]
+        }));
+        try {
+          const { error } = await supabase.from('assemblies').insert([{
+            id,
+            title: assembly.title,
+            description: assembly.description,
+            date: assembly.date,
+            status: assembly.status,
+            options: assembly.options,
             votes: [],
-            legalValidityHash: `SHA256-${uuidv4().substring(0, 8).toUpperCase()}`
-          }
-        ]
-      })),
+            legal_validity_hash: newAssembly.legalValidityHash
+          }]);
+          if (error) console.error('Erro Supabase addAssembly:', error);
+        } catch (e) { console.error(e); }
+      },
 
-      castVote: (assemblyId, optionId, userName) => set((state) => ({
-        assemblies: state.assemblies.map(a => {
-          if (a.id !== assemblyId) return a;
-          const vote: Vote = {
-            id: uuidv4(),
-            userId: 'current-user', // In a real app, this would be the logged in user's ID
-            userName,
-            optionId,
-            timestamp: new Date().toISOString(),
-            signature: `SIG-${uuidv4().substring(0, 12).toUpperCase()}`
-          };
-          return { ...a, votes: [...a.votes, vote] };
-        })
-      })),
+      castVote: async (assemblyId, optionId, userName) => {
+        const assembly = get().assemblies.find(a => a.id === assemblyId);
+        if (!assembly) return;
 
-      closeAssembly: (id) => set((state) => ({
-        assemblies: state.assemblies.map(a => a.id === id ? { ...a, status: 'CLOSED' } : a)
-      })),
+        const vote: Vote = {
+          id: uuidv4(),
+          userId: 'current-user',
+          userName,
+          optionId,
+          timestamp: new Date().toISOString(),
+          signature: `SIG-${uuidv4().substring(0, 12).toUpperCase()}`
+        };
 
-      deleteAssembly: (id) => set((state) => ({
-        assemblies: state.assemblies.filter(a => a.id !== id)
-      })),
+        const newVotes = [...assembly.votes, vote];
 
-      addNotice: (notice) => set((state) => ({
-        notices: [
-          { ...notice, id: uuidv4(), date: new Date().toISOString() },
-          ...state.notices
-        ]
-      })),
+        set((state) => ({
+          assemblies: state.assemblies.map(a => a.id === assemblyId ? { ...a, votes: newVotes } : a)
+        }));
 
-      updateNotice: (id, updated) => set((state) => ({
-        notices: state.notices.map(n => n.id === id ? { ...n, ...updated } : n)
-      })),
+        try {
+          const { error } = await supabase.from('assemblies').update({ votes: newVotes }).eq('id', assemblyId);
+          if (error) console.error('Erro Supabase castVote:', error);
+        } catch (e) { console.error(e); }
+      },
 
-      deleteNotice: (id) => set((state) => ({
-        notices: state.notices.filter(n => n.id !== id)
-      })),
+      closeAssembly: async (id) => {
+        set((state) => ({
+          assemblies: state.assemblies.map(a => a.id === id ? { ...a, status: 'CLOSED' } : a)
+        }));
+        try {
+          const { error } = await supabase.from('assemblies').update({ status: 'CLOSED' }).eq('id', id);
+          if (error) console.error('Erro Supabase closeAssembly:', error);
+        } catch (e) { console.error(e); }
+      },
 
-      addPackage: (pkg) => set((state) => {
+      deleteAssembly: async (id) => {
+        set((state) => ({
+          assemblies: state.assemblies.filter(a => a.id !== id)
+        }));
+        try {
+          const { error } = await supabase.from('assemblies').delete().eq('id', id);
+          if (error) console.error('Erro Supabase deleteAssembly:', error);
+        } catch (e) { console.error(e); }
+      },
+
+      addNotice: async (notice) => {
+        const id = uuidv4();
+        const newNotice = { ...notice, id, date: new Date().toISOString() };
+        set((state) => ({
+          notices: [newNotice, ...state.notices]
+        }));
+        try {
+          const { error } = await supabase.from('notices').insert([{
+            id,
+            title: notice.title,
+            content: notice.content,
+            date: newNotice.date,
+            category: notice.category,
+            tower: notice.tower,
+            apartment_line: notice.apartmentLine,
+            client_id: notice.clientId
+          }]);
+          if (error) console.error('Erro Supabase addNotice:', error);
+        } catch (e) { console.error(e); }
+      },
+
+      updateNotice: async (id, updated) => {
+        set((state) => ({
+          notices: state.notices.map(n => n.id === id ? { ...n, ...updated } : n)
+        }));
+        try {
+          const { error } = await supabase.from('notices').update({
+            title: updated.title,
+            content: updated.content,
+            category: updated.category,
+            tower: updated.tower,
+            apartment_line: updated.apartmentLine,
+            client_id: updated.clientId
+          }).eq('id', id);
+          if (error) console.error('Erro Supabase updateNotice:', error);
+        } catch (e) { console.error(e); }
+      },
+
+      deleteNotice: async (id) => {
+        set((state) => ({
+          notices: state.notices.filter(n => n.id !== id)
+        }));
+        try {
+          const { error } = await supabase.from('notices').delete().eq('id', id);
+          if (error) console.error('Erro Supabase deleteNotice:', error);
+        } catch (e) { console.error(e); }
+      },
+
+      addPackage: async (pkg) => {
         const id = uuidv4();
         const newPkg: Package = {
           ...pkg,
@@ -1189,33 +1681,59 @@ export const useStore = create<AppState>()(
           qrCode: `PKG-${id.substring(0, 8).toUpperCase()}`
         };
         
-        // Auto-notify logic
-        state.addNotification({
+        set((state) => ({ packages: [newPkg, ...state.packages] }));
+
+        try {
+          const { error } = await supabase.from('packages').insert([{
+            id,
+            resident_name: pkg.residentName,
+            apartment: pkg.apartment,
+            tower: pkg.tower,
+            carrier: pkg.carrier,
+            tracking_code: pkg.trackingCode,
+            received_at: newPkg.receivedAt,
+            status: 'PENDING',
+            qr_code: newPkg.qrCode,
+            photo_url: pkg.photoUrl,
+            client_id: pkg.clientId
+          }]);
+          if (error) console.error('Erro Supabase addPackage:', error);
+        } catch (e) { console.error(e); }
+
+        get().addNotification({
           title: 'Nova Encomenda!',
           message: `Pacote de ${pkg.carrier} para ${pkg.residentName} (${pkg.apartment} ${pkg.tower}). QR Code enviado via WhatsApp.`,
           type: 'SUCCESS'
         });
+      },
 
-        return { packages: [newPkg, ...state.packages] };
-      }),
+      pickupPackage: async (id) => {
+        const pkg = get().packages.find(p => p.id === id);
+        if (!pkg) return;
+        const pickedUpAt = new Date().toISOString();
 
-      pickupPackage: (id) => set((state) => {
-        const pkg = state.packages.find(p => p.id === id);
-        if (pkg) {
-          state.addNotification({
-            title: 'Encomenda Retirada',
-            message: `O pacote de ${pkg.carrier} foi retirado por ${pkg.residentName}.`,
-            type: 'INFO'
-          });
-        }
-        return {
+        set((state) => ({
           packages: state.packages.map(p => 
-            p.id === id ? { ...p, status: 'PICKED_UP', pickedUpAt: new Date().toISOString() } : p
+            p.id === id ? { ...p, status: 'PICKED_UP', pickedUpAt } : p
           )
-        };
-      }),
+        }));
 
-      addVisitor: (visitor) => set((state) => {
+        try {
+          const { error } = await supabase.from('packages').update({ 
+            status: 'PICKED_UP', 
+            picked_up_at: pickedUpAt 
+          }).eq('id', id);
+          if (error) console.error('Erro Supabase pickupPackage:', error);
+        } catch (e) { console.error(e); }
+
+        get().addNotification({
+          title: 'Encomenda Retirada',
+          message: `O pacote de ${pkg.carrier} foi retirado por ${pkg.residentName}.`,
+          type: 'INFO'
+        });
+      },
+
+      addVisitor: async (visitor) => {
         const id = uuidv4();
         const newVisitor: Visitor = {
           ...visitor,
@@ -1223,29 +1741,59 @@ export const useStore = create<AppState>()(
           qrCode: `VIS-${id}`,
           status: 'ACTIVE'
         };
-        return { visitors: [newVisitor, ...state.visitors] };
-      }),
+        set((state) => ({ visitors: [newVisitor, ...state.visitors] }));
+        try {
+          const { error } = await supabase.from('visitors').insert([{
+            id,
+            name: visitor.name,
+            document: visitor.document,
+            type: visitor.type,
+            apartment: visitor.apartment,
+            tower: visitor.tower,
+            valid_until: visitor.validUntil,
+            qr_code: newVisitor.qrCode,
+            status: 'ACTIVE'
+          }]);
+          if (error) console.error('Erro Supabase addVisitor:', error);
+        } catch (e) { console.error(e); }
+      },
 
-      revokeVisitor: (id) => set((state) => ({
-        visitors: state.visitors.map(v => v.id === id ? { ...v, status: 'EXPIRED' } : v)
-      })),
+      revokeVisitor: async (id) => {
+        set((state) => ({
+          visitors: state.visitors.map(v => v.id === id ? { ...v, status: 'EXPIRED' } : v)
+        }));
+        try {
+          const { error } = await supabase.from('visitors').update({ status: 'EXPIRED' }).eq('id', id);
+          if (error) console.error('Erro Supabase revokeVisitor:', error);
+        } catch (e) { console.error(e); }
+      },
 
-      updateCriticalEvent: (id, status, description) => set((state) => {
-        const updatedEvents = state.criticalEvents.map(e => 
-          e.id === id ? { ...e, status, description, lastUpdate: new Date().toISOString() } : e
-        );
+      updateCriticalEvent: async (id, status, description) => {
+        const lastUpdate = new Date().toISOString();
+        set((state) => ({
+          criticalEvents: state.criticalEvents.map(e => 
+            e.id === id ? { ...e, status, description, lastUpdate } : e
+          )
+        }));
+
+        try {
+          const { error } = await supabase.from('critical_events').update({ 
+            status, 
+            description, 
+            last_update: lastUpdate 
+          }).eq('id', id);
+          if (error) console.error('Erro Supabase updateCriticalEvent:', error);
+        } catch (e) { console.error(e); }
 
         if (status === 'CRITICAL') {
-          const event = updatedEvents.find(e => e.id === id);
-          state.addNotification({
+          const event = get().criticalEvents.find(e => e.id === id);
+          get().addNotification({
             title: 'ALERTA CRÍTICO!',
             message: `${event?.device}: ${description}`,
             type: 'ERROR'
           });
         }
-
-        return { criticalEvents: updatedEvents };
-      }),
+      },
 
       setEnergyData: (energyData) => set({ energyData }),
 

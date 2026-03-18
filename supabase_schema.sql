@@ -344,11 +344,10 @@ BEGIN
         EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
         EXECUTE format('DROP POLICY IF EXISTS "Allow full access to authenticated users" ON %I', t);
         EXECUTE format('CREATE POLICY "Allow full access to authenticated users" ON %I FOR ALL TO authenticated USING (true) WITH CHECK (true)', t);
-        -- Adicionar política para anon se necessário (ex: formulários públicos)
-        IF t = 'tickets' OR t = 'clients' THEN
-             EXECUTE format('DROP POLICY IF EXISTS "Allow anon insert" ON %I', t);
-             EXECUTE format('CREATE POLICY "Allow anon insert" ON %I FOR INSERT TO anon WITH CHECK (true)', t);
-        END IF;
+        
+        -- Adicionar política para anon (acesso total para testes sem Auth)
+        EXECUTE format('DROP POLICY IF EXISTS "Allow full access to anon" ON %I', t);
+        EXECUTE format('CREATE POLICY "Allow full access to anon" ON %I FOR ALL TO anon USING (true) WITH CHECK (true)', t);
     END LOOP;
 END;
 $$;
