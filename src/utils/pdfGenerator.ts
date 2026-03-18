@@ -1,9 +1,12 @@
-import { jsPDF } from 'jspdf';
-import { toCanvas } from 'html-to-image';
+import html2pdf from 'html2pdf.js';
 
 export async function generatePdf(element: HTMLElement, fileName: string, format: string = 'a4') {
+  if (!element) {
+    throw new Error('Elemento para geração do PDF não foi fornecido.');
+  }
+  
   try {
-    console.log(`Iniciando geração de PDF (Motor: html-to-image + jsPDF, Formato: ${format}) para:`, fileName);
+    console.log(`Iniciando geração de PDF (Motor: html2pdf.js, Formato: ${format}) para:`, fileName);
     
     // Garantir que as imagens estão carregadas
     const images = Array.from(element.getElementsByTagName('img'));
@@ -16,51 +19,44 @@ export async function generatePdf(element: HTMLElement, fileName: string, format
     }));
 
     // Pequeno delay para estabilização e renderização completa
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Captura o elemento como canvas usando html-to-image (mais robusto que html2canvas para CSS moderno)
-    const canvas = await toCanvas(element, {
-      backgroundColor: '#ffffff',
-      pixelRatio: 2,
-      skipFonts: false,
-      fontEmbedCSS: '',
-      style: {
-        transform: 'scale(1)',
-        transformOrigin: 'top left',
+    const opt: any = {
+      margin: [10, 10, 10, 10], // Margens de 10mm (topo, esquerda, baixo, direita)
+      filename: fileName,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { 
+        scale: 2, 
+        useCORS: true, 
+        letterRendering: true,
+        backgroundColor: '#ffffff',
+        logging: false
+      },
+      jsPDF: { 
+        unit: 'mm', 
+        format: format, 
+        orientation: 'portrait',
+        compress: true
+      },
+      pagebreak: { 
+        mode: ['avoid-all', 'css', 'legacy'],
+        avoid: ['.break-inside-avoid', '.page-break-inside-avoid', 'tr', 'blockquote', 'button', '.no-break']
       }
-    });
+    };
 
-    const imgData = canvas.toDataURL('image/jpeg', 0.95);
-    const pdf = new jsPDF('p', 'mm', format as any);
+    // Usando html2pdf para gerar o PDF respeitando quebras de página
+    await html2pdf().set(opt).from(element).save();
     
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    
-    const imgProps = pdf.getImageProperties(imgData);
-    const margin = 10; // 10mm de margem
-    const contentWidth = pdfWidth - (margin * 2);
-    const contentHeight = (imgProps.height * contentWidth) / imgProps.width;
-    
-    let heightLeft = contentHeight;
-    let position = margin;
-
-    // Adiciona a primeira página
-    pdf.addImage(imgData, 'JPEG', margin, position, contentWidth, contentHeight);
-    heightLeft -= (pdfHeight - (margin * 2));
-
-    // Adiciona páginas subsequentes se o conteúdo for maior que uma página
-    while (heightLeft > 0) {
-      position = heightLeft - contentHeight + margin;
-      pdf.addPage();
-      pdf.addImage(imgData, 'JPEG', margin, position, contentWidth, contentHeight);
-      heightLeft -= (pdfHeight - (margin * 2));
-    }
-
-    pdf.save(fileName);
-    console.log('PDF gerado com sucesso via html-to-image + jsPDF');
+    console.log('PDF gerado com sucesso via html2pdf.js');
     return true;
   } catch (error) {
     console.error('Erro crítico na geração do PDF:', error);
-    throw new Error(error instanceof Error ? error.message : 'Falha na geração do PDF');
+    let message = 'Erro desconhecido';
+    if (error instanceof Error) {
+      message = error.message;
+    } else if (typeof error === 'string') {
+      message = error;
+    }
+    throw new Error(`Falha na geração do PDF: ${message}`);
   }
 }

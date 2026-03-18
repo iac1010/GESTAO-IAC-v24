@@ -734,7 +734,7 @@ export default function Quotes() {
               </div>
 
               {/* Totals: High Impact Linear Block */}
-              <div className="mt-auto break-inside-avoid">
+              <div className="mt-auto break-inside-avoid no-break">
                 <div className="border-t-4 border-zinc-900 pt-12">
                   <div className="flex justify-between items-start mb-20">
                     <div className="max-w-md">
@@ -761,7 +761,7 @@ export default function Quotes() {
                   </div>
 
                   {/* Signatures: Clean Linear Grid */}
-                  <div className="grid grid-cols-2 gap-24 pt-20 border-t border-zinc-50">
+                  <div className="grid grid-cols-2 gap-24 pt-20 border-t border-zinc-50 break-inside-avoid no-break">
                     <div className="space-y-4">
                       <div className="flex flex-col items-center">
                         <div className="h-16 flex items-end justify-center w-full relative">

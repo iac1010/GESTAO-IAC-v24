@@ -304,7 +304,7 @@ export default function Receipts() {
               </div>
 
               {/* Footer */}
-              <div className="mt-32 pt-8 text-center break-inside-avoid">
+              <div className="mt-32 pt-8 text-center break-inside-avoid no-break">
                 <p className="mb-20 text-lg">
                   _________________, {new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
                 </p>
@@ -501,7 +501,7 @@ export default function Receipts() {
             </div>
 
             {/* Footer */}
-            <div className="mt-32 pt-8 text-center">
+            <div className="mt-32 pt-8 text-center break-inside-avoid no-break">
               <p className="mb-20 text-lg">
                 _________________, {new Date(downloadingReceipt.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
               </p>

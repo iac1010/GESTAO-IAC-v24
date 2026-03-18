@@ -390,7 +390,7 @@ export default function TicketView() {
         </div>
 
         {/* Assinaturas */}
-        <div className="mt-20 grid grid-cols-2 gap-20 break-inside-avoid page-break-inside-avoid">
+        <div className="mt-20 grid grid-cols-2 gap-20 break-inside-avoid page-break-inside-avoid no-break">
           <div className="text-center">
             <div className="flex flex-col items-center mb-4">
               <div className="h-24 flex items-end justify-center w-full relative">
