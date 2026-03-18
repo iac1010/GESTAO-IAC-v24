@@ -103,9 +103,9 @@ export default function Calendar() {
     let glow = '0 0 15px rgba(24, 24, 27, 0.2)';
     
     if (event.resource.type === 'TICKET') {
-      backgroundColor = 'rgba(24, 24, 27, 0.9)'; // zinc-900 for tickets
-      border = '1px solid rgba(24, 24, 27, 1)';
-      glow = '0 0 15px rgba(24, 24, 27, 0.3)';
+      backgroundColor = '#2563eb'; // Blue-600 for high visibility
+      border = '2px solid #1d4ed8';
+      glow = '0 4px 12px rgba(37, 99, 235, 0.4)';
     } else if (event.resource.type === 'OTHER') {
       backgroundColor = 'rgba(113, 113, 122, 0.8)'; // zinc-500 for other
       border = '1px solid rgba(113, 113, 122, 0.9)';
@@ -223,6 +223,7 @@ export default function Calendar() {
           endAccessor="end"
           style={{ height: '100%' }}
           culture="pt-BR"
+          defaultView="week"
           messages={{
             next: "Próximo",
             previous: "Anterior",

@@ -1,27 +1,40 @@
 import React, { useState, useRef } from 'react';
-import { useStore } from '../store';
-import { Download, Printer, FileText, FileCheck, Calendar, DollarSign, User } from 'lucide-react';
+import { useStore, Receipt } from '../store';
+import { Download, Printer, FileText, FileCheck, Calendar, DollarSign, User, Trash2, Search } from 'lucide-react';
 import { BackButton } from '../components/BackButton';
 import { generatePdf } from '../utils/pdfGenerator';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 
 export default function Receipts() {
   const navigate = useNavigate();
-  const { clients, companyLogo, companyData, companySignature, addReceipt } = useStore();
+  const { clients, receipts, companyLogo, companyData, companySignature, addReceipt, deleteReceipt } = useStore();
   const [clientId, setClientId] = useState('');
   const [value, setValue] = useState<number>(0);
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [downloadingReceipt, setDownloadingReceipt] = useState<Receipt | null>(null);
+  const [receiptToDelete, setReceiptToDelete] = useState<string | null>(null);
 
   const receiptRef = useRef<HTMLDivElement>(null);
+  const downloadRef = useRef<HTMLDivElement>(null);
 
   const selectedClient = clients.find(c => c.id === clientId);
 
+  const filteredReceipts = receipts
+    .filter(r => {
+      const client = clients.find(c => c.id === r.clientId);
+      const searchStr = `${client?.name} ${r.description} ${r.value}`.toLowerCase();
+      return searchStr.includes(searchTerm.toLowerCase());
+    })
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
   const handleSaveAndDownload = async () => {
     if (!clientId || value <= 0 || !description) {
-      alert('Preencha todos os campos obrigatórios (Cliente, Valor e Descrição).');
+      toast.error('Preencha todos os campos obrigatórios (Cliente, Valor e Descrição).');
       return;
     }
 
@@ -46,12 +59,47 @@ export default function Receipts() {
       setClientId('');
       setValue(0);
       setDescription('');
+      toast.success('Recibo gerado e salvo com sucesso!');
       
     } catch (error) {
       console.error('Erro ao gerar recibo:', error);
-      alert('Erro ao gerar PDF. Tente usar o botão "Imprimir" no topo da página como alternativa.');
+      toast.error('Erro ao gerar PDF. Tente usar o botão "Imprimir" no topo da página como alternativa.');
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleDownloadExisting = async (receipt: Receipt) => {
+    setDownloadingReceipt(receipt);
+    setIsGenerating(true);
+    
+    // Wait for state to update and DOM to render
+    setTimeout(async () => {
+      if (downloadRef.current) {
+        try {
+          const client = clients.find(c => c.id === receipt.clientId);
+          const fileName = `Recibo_${client?.name.replace(/\s+/g, '_')}_${receipt.date}.pdf`;
+          await generatePdf(downloadRef.current, fileName);
+          toast.success('Download iniciado!');
+        } catch (error) {
+          console.error('Erro ao baixar recibo:', error);
+          toast.error('Erro ao gerar PDF do recibo antigo.');
+        }
+      }
+      setDownloadingReceipt(null);
+      setIsGenerating(false);
+    }, 800);
+  };
+
+  const handleDeleteReceipt = (id: string) => {
+    setReceiptToDelete(id);
+  };
+
+  const confirmDelete = () => {
+    if (receiptToDelete) {
+      deleteReceipt(receiptToDelete);
+      toast.success('Recibo excluído com sucesso!');
+      setReceiptToDelete(null);
     }
   };
 
@@ -286,6 +334,232 @@ export default function Receipts() {
           </div>
         </motion.div>
       </div>
+
+      {/* Receipts List */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mt-12 relative z-10 print:hidden"
+      >
+        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+            <div className="flex items-center gap-3">
+              <div className="bg-white/10 p-3 rounded-xl">
+                <FileText className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight">Recibos Gerados</h2>
+                <p className="text-white/50 text-sm">Histórico de todos os recibos emitidos</p>
+              </div>
+            </div>
+
+            <div className="relative w-full md:w-96">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 w-5 h-5" />
+              <input 
+                type="text" 
+                placeholder="Buscar por cliente ou descrição..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 focus:border-white/30 text-white rounded-xl pl-12 pr-4 py-3 outline-none transition-all placeholder:text-white/20"
+              />
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="px-6 py-4 text-sm font-bold uppercase tracking-wider text-white/30">Data</th>
+                  <th className="px-6 py-4 text-sm font-bold uppercase tracking-wider text-white/30">Cliente</th>
+                  <th className="px-6 py-4 text-sm font-bold uppercase tracking-wider text-white/30">Descrição</th>
+                  <th className="px-6 py-4 text-sm font-bold uppercase tracking-wider text-white/30">Valor</th>
+                  <th className="px-6 py-4 text-sm font-bold uppercase tracking-wider text-white/30 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                <AnimatePresence mode="popLayout">
+                  {filteredReceipts.length > 0 ? (
+                    filteredReceipts.map((receipt) => {
+                      const client = clients.find(c => c.id === receipt.clientId);
+                      return (
+                        <motion.tr 
+                          key={receipt.id}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0, x: -20 }}
+                          className="group hover:bg-white/5 transition-colors"
+                        >
+                          <td className="px-6 py-4 font-medium text-white/70">
+                            {new Date(receipt.date).toLocaleDateString('pt-BR')}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="font-bold text-white">{client?.name || 'Cliente excluído'}</div>
+                            <div className="text-xs text-white/30">{client?.document}</div>
+                          </td>
+                          <td className="px-6 py-4 text-white/60 max-w-md truncate">
+                            {receipt.description}
+                          </td>
+                          <td className="px-6 py-4 font-black text-emerald-400">
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(receipt.value)}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <button 
+                                onClick={() => handleDownloadExisting(receipt)}
+                                className="p-2 bg-white/5 hover:bg-white/20 text-white rounded-lg transition-all"
+                                title="Baixar PDF"
+                              >
+                                <Download className="w-5 h-5" />
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteReceipt(receipt.id)}
+                                className="p-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-lg transition-all"
+                                title="Excluir"
+                              >
+                                <Trash2 className="w-5 h-5" />
+                              </button>
+                            </div>
+                          </td>
+                        </motion.tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-12 text-center text-white/20 italic">
+                        Nenhum recibo encontrado.
+                      </td>
+                    </tr>
+                  )}
+                </AnimatePresence>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Hidden Receipt for Download */}
+      <div className="fixed left-[-9999px] top-0 pointer-events-none">
+        {downloadingReceipt && (
+          <div 
+            ref={downloadRef}
+            className="bg-white w-[800px] p-12 text-gray-900"
+            style={{ minHeight: '1056px' }}
+          >
+            {/* Header */}
+            <div className="flex justify-between items-start border-b-2 border-gray-800 pb-8 mb-8">
+              <div className="flex items-center gap-4">
+                {companyLogo ? (
+                  <img src={companyLogo} alt="Logo" className="h-16 w-auto max-w-[200px] object-contain" />
+                ) : (
+                  <div className="p-3 bg-red-600 rounded-lg">
+                    <FileText className="w-8 h-8 text-white" />
+                  </div>
+                )}
+                <div>
+                  <h2 className="text-2xl font-bold uppercase tracking-wider">Recibo</h2>
+                  <p className="text-gray-500 font-medium">Nº {downloadingReceipt.id.slice(0, 4).toUpperCase()}</p>
+                </div>
+              </div>
+              <div className="text-right text-sm text-gray-600">
+                {companyData ? (
+                  <>
+                    <p className="font-bold text-gray-900">{companyData.name}</p>
+                    <p>CNPJ/CPF: {companyData.document}</p>
+                    <p>{companyData.phone}</p>
+                    <p>{companyData.email}</p>
+                  </>
+                ) : (
+                  <p className="italic">Dados da empresa não configurados</p>
+                )}
+              </div>
+            </div>
+
+            {/* Value Box */}
+            <div className="flex justify-end mb-8">
+              <div className="text-3xl font-bold text-gray-900 border-2 border-gray-900 p-4 rounded-lg inline-block bg-gray-50">
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(downloadingReceipt.value)}
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="space-y-10 text-xl leading-relaxed">
+              <p>
+                Recebi(emos) de <strong className="uppercase border-b border-gray-300 pb-1">
+                  {clients.find(c => c.id === downloadingReceipt.clientId)?.name || 'Cliente'}
+                </strong>, 
+                {clients.find(c => c.id === downloadingReceipt.clientId)?.document ? ` inscrito(a) no CNPJ/CPF sob o nº ${clients.find(c => c.id === downloadingReceipt.clientId)?.document}, ` : ' '}
+                a importância de <strong>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(downloadingReceipt.value)}</strong>.
+              </p>
+
+              <p>
+                Referente a: <span className="italic border-b border-gray-200 pb-1 inline-block w-full">{downloadingReceipt.description}</span>
+              </p>
+
+              <p className="text-gray-700">
+                Para maior clareza, firmo(amos) o presente recibo para que produza os seus efeitos legais.
+              </p>
+            </div>
+
+            {/* Footer */}
+            <div className="mt-32 pt-8 text-center">
+              <p className="mb-20 text-lg">
+                _________________, {new Date(downloadingReceipt.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
+              </p>
+              <div className="grid grid-cols-2 gap-16 max-w-3xl mx-auto">
+                <div className="flex flex-col items-center w-full">
+                  <div className="h-20 flex items-end justify-center w-full relative">
+                    {companySignature && (
+                      <img src={companySignature} alt="Assinatura" className="max-h-full max-w-full object-contain mb-[-10px] relative z-10" />
+                    )}
+                  </div>
+                  <div className="border-t-2 border-gray-800 pt-3 w-full">
+                    <p className="font-bold text-lg">Síndico</p>
+                    <p className="text-sm text-gray-500 mt-1">Assinatura</p>
+                  </div>
+                </div>
+                <div className="flex flex-col items-center w-full">
+                  <div className="h-20 w-full"></div>
+                  <div className="border-t-2 border-gray-800 pt-3 w-full">
+                    <p className="font-bold text-lg">Cliente</p>
+                    <p className="text-sm text-gray-500 mt-1">Assinatura</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Confirmation Modal */}
+      {receiptToDelete && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[10000] flex items-center justify-center p-4">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-[#004a7c] border border-white/20 rounded-3xl p-8 max-w-sm w-full shadow-2xl"
+          >
+            <div className="bg-red-500/20 w-16 h-16 rounded-2xl flex items-center justify-center mb-6 mx-auto">
+              <Trash2 className="w-8 h-8 text-red-500" />
+            </div>
+            <h3 className="text-2xl font-bold text-center mb-2">Excluir Recibo?</h3>
+            <p className="text-white/60 text-center mb-8">Esta ação não pode ser desfeita. O recibo será removido permanentemente.</p>
+            <div className="grid grid-cols-2 gap-4">
+              <button 
+                onClick={() => setReceiptToDelete(null)}
+                className="bg-white/10 hover:bg-white/20 text-white py-3 rounded-xl font-bold transition-all"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={confirmDelete}
+                className="bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl font-bold transition-all shadow-lg shadow-red-500/20"
+              >
+                Excluir
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
