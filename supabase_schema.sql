@@ -4,7 +4,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- 1. Tabela de Clientes
-CREATE TABLE clients (
+CREATE TABLE IF NOT EXISTS clients (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
   document TEXT,
@@ -18,7 +18,7 @@ CREATE TABLE clients (
 );
 
 -- 2. Tabela de Itens de Checklist
-CREATE TABLE checklist_items (
+CREATE TABLE IF NOT EXISTS checklist_items (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   task TEXT NOT NULL,
   category TEXT NOT NULL,
@@ -29,7 +29,7 @@ CREATE TABLE checklist_items (
 );
 
 -- 3. Tabela de Produtos/Serviços
-CREATE TABLE products (
+CREATE TABLE IF NOT EXISTS products (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   code TEXT,
   name TEXT NOT NULL,
@@ -41,15 +41,15 @@ CREATE TABLE products (
 );
 
 -- 4. Tabela de Ordens de Serviço (Tickets)
-CREATE TABLE tickets (
+CREATE TABLE IF NOT EXISTS tickets (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   os_number TEXT,
   title TEXT,
-  type TEXT NOT NULL CHECK (type IN ('PREVENTIVA', 'CORRETIVA')),
-  status TEXT CHECK (status IN ('APROVADO', 'AGUARDANDO_MATERIAL', 'REALIZANDO', 'CONCLUIDO')),
+  type TEXT NOT NULL CHECK (type IN ('PREVENTIVA', 'CORRETIVA', 'TAREFA')),
+  status TEXT CHECK (status IN ('PENDENTE_APROVACAO', 'APROVADO', 'AGUARDANDO_MATERIAL', 'REALIZANDO', 'CONCLUIDO', 'REJEITADO')),
   maintenance_category TEXT,
   maintenance_subcategory TEXT,
-  client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
   date TIMESTAMP WITH TIME ZONE NOT NULL,
   technician TEXT NOT NULL,
   observations TEXT,
@@ -58,12 +58,18 @@ CREATE TABLE tickets (
   service_report TEXT,
   checklist_results JSONB, -- Array de objetos: [{taskId, status, notes}]
   images TEXT[], -- Array de URLs ou Base64 das imagens
+  reported_by TEXT,
+  location TEXT,
+  photo_before TEXT,
+  budget_amount DECIMAL(10, 2),
+  budget_approved BOOLEAN DEFAULT FALSE,
+  color TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- 5. Tabela de Orçamentos (Quotes)
-CREATE TABLE quotes (
+CREATE TABLE IF NOT EXISTS quotes (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
   date TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -75,7 +81,7 @@ CREATE TABLE quotes (
 );
 
 -- 6. Tabela de Recibos
-CREATE TABLE receipts (
+CREATE TABLE IF NOT EXISTS receipts (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
   date TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -86,7 +92,7 @@ CREATE TABLE receipts (
 );
 
 -- 7. Tabela de Custos/Despesas
-CREATE TABLE costs (
+CREATE TABLE IF NOT EXISTS costs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   description TEXT NOT NULL,
   value DECIMAL(10, 2) NOT NULL,
@@ -97,7 +103,7 @@ CREATE TABLE costs (
 );
 
 -- 8. Tabela de Agendamentos (Calendário)
-CREATE TABLE appointments (
+CREATE TABLE IF NOT EXISTS appointments (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   title TEXT NOT NULL,
   start_time TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -109,8 +115,165 @@ CREATE TABLE appointments (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 9. Tabela de Configurações da Empresa (Registro Único)
-CREATE TABLE company_settings (
+-- 9. Tabela de Fornecedores
+CREATE TABLE IF NOT EXISTS suppliers (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  contact TEXT,
+  phone TEXT,
+  email TEXT,
+  category TEXT CHECK (category IN ('LIMPEZA', 'PISCINA', 'GERAL')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 10. Tabela de Itens de Suprimentos
+CREATE TABLE IF NOT EXISTS supply_items (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  category TEXT CHECK (category IN ('LIMPEZA', 'PISCINA')),
+  current_stock INTEGER DEFAULT 0,
+  min_stock INTEGER DEFAULT 0,
+  unit TEXT,
+  last_price DECIMAL(10, 2),
+  client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 11. Tabela de Pagamentos
+CREATE TABLE IF NOT EXISTS payments (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  amount DECIMAL(10, 2) NOT NULL,
+  due_date TIMESTAMP WITH TIME ZONE NOT NULL,
+  payment_date TIMESTAMP WITH TIME ZONE,
+  status TEXT NOT NULL CHECK (status IN ('PAID', 'PENDING', 'OVERDUE')),
+  reference TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 12. Tabela de Acordos Jurídicos
+CREATE TABLE IF NOT EXISTS legal_agreements (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  total_amount DECIMAL(10, 2) NOT NULL,
+  installments INTEGER NOT NULL,
+  remaining_installments INTEGER NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('ACTIVE', 'COMPLETED', 'BREACHED')),
+  start_date TIMESTAMP WITH TIME ZONE NOT NULL,
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 13. Tabela de Manutenções Agendadas (NBR 5674)
+CREATE TABLE IF NOT EXISTS scheduled_maintenances (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  standard_id TEXT NOT NULL,
+  item TEXT NOT NULL,
+  frequency TEXT NOT NULL,
+  last_done TIMESTAMP WITH TIME ZONE,
+  next_date TIMESTAMP WITH TIME ZONE NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('PENDING', 'DONE', 'OVERDUE')),
+  category TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 14. Tabela de Leituras de Consumo
+CREATE TABLE IF NOT EXISTS consumption_readings (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  type TEXT NOT NULL CHECK (type IN ('WATER', 'GAS')),
+  previous_value DECIMAL(12, 3) NOT NULL,
+  current_value DECIMAL(12, 3) NOT NULL,
+  consumption DECIMAL(12, 3) NOT NULL,
+  date TIMESTAMP WITH TIME ZONE NOT NULL,
+  unit TEXT,
+  billed BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 15. Tabela de Assembleias Virtuais
+CREATE TABLE IF NOT EXISTS assemblies (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title TEXT NOT NULL,
+  description TEXT,
+  date TIMESTAMP WITH TIME ZONE NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('UPCOMING', 'ACTIVE', 'CLOSED')),
+  options JSONB NOT NULL, -- Array de objetos: [{id, text}]
+  votes JSONB DEFAULT '[]', -- Array de objetos: [{id, userId, userName, optionId, timestamp, signature}]
+  legal_validity_hash TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 16. Tabela de Comunicados (Notices)
+CREATE TABLE IF NOT EXISTS notices (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  date TIMESTAMP WITH TIME ZONE NOT NULL,
+  category TEXT NOT NULL CHECK (category IN ('MAINTENANCE', 'EVENT', 'GENERAL', 'SECURITY')),
+  tower TEXT,
+  apartment_line TEXT,
+  client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 17. Tabela de Encomendas (Packages)
+CREATE TABLE IF NOT EXISTS packages (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  resident_name TEXT NOT NULL,
+  apartment TEXT NOT NULL,
+  tower TEXT,
+  carrier TEXT,
+  tracking_code TEXT,
+  received_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  picked_up_at TIMESTAMP WITH TIME ZONE,
+  status TEXT NOT NULL CHECK (status IN ('PENDING', 'PICKED_UP')),
+  qr_code TEXT,
+  photo_url TEXT,
+  client_id UUID REFERENCES clients(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 18. Tabela de Visitantes
+CREATE TABLE IF NOT EXISTS visitors (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  document TEXT,
+  type TEXT NOT NULL CHECK (type IN ('VISITOR', 'SERVICE_PROVIDER')),
+  apartment TEXT NOT NULL,
+  tower TEXT,
+  valid_until TIMESTAMP WITH TIME ZONE NOT NULL,
+  qr_code TEXT,
+  status TEXT NOT NULL CHECK (status IN ('ACTIVE', 'EXPIRED', 'USED')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 19. Tabela de Eventos Críticos (IoT)
+CREATE TABLE IF NOT EXISTS critical_events (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  device TEXT NOT NULL,
+  location TEXT,
+  type TEXT NOT NULL CHECK (type IN ('PUMP', 'DOOR', 'FIRE', 'ELECTRICAL')),
+  status TEXT NOT NULL CHECK (status IN ('NORMAL', 'ALERT', 'CRITICAL')),
+  last_update TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  description TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 20. Tabela de Configurações da Empresa (Registro Único)
+CREATE TABLE IF NOT EXISTS company_settings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT,
   document TEXT,
@@ -125,9 +288,10 @@ CREATE TABLE company_settings (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Inserir registro padrão de configurações
+-- Inserir registro padrão de configurações se não existir
 INSERT INTO company_settings (name, theme, menu_order) 
-VALUES ('IA COMPANY TEC', 'light', ARRAY['dashboard', 'clients', 'products', 'tickets', 'kanban', 'quotes', 'receipts', 'financial', 'calendar', 'settings']);
+SELECT 'IA COMPANY TEC', 'light', ARRAY['dashboard', 'accountability', 'consumption', 'clients', 'products', 'supplies', 'tickets', 'kanban', 'quotes', 'receipts', 'financial', 'calendar', 'settings']
+WHERE NOT EXISTS (SELECT 1 FROM company_settings);
 
 -- ==========================================
 -- TRIGGERS PARA ATUALIZAR O UPDATED_AT
@@ -141,30 +305,50 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE TRIGGER update_clients_modtime BEFORE UPDATE ON clients FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
-CREATE TRIGGER update_checklist_items_modtime BEFORE UPDATE ON checklist_items FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
-CREATE TRIGGER update_products_modtime BEFORE UPDATE ON products FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
-CREATE TRIGGER update_tickets_modtime BEFORE UPDATE ON tickets FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
-CREATE TRIGGER update_quotes_modtime BEFORE UPDATE ON quotes FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
-CREATE TRIGGER update_receipts_modtime BEFORE UPDATE ON receipts FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
-CREATE TRIGGER update_costs_modtime BEFORE UPDATE ON costs FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
-CREATE TRIGGER update_appointments_modtime BEFORE UPDATE ON appointments FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
+DO $$
+DECLARE
+    t text;
+BEGIN
+    FOR t IN 
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_type = 'BASE TABLE'
+        AND table_name NOT IN ('company_settings') -- já tem trigger ou é especial
+    LOOP
+        EXECUTE format('DROP TRIGGER IF EXISTS update_%I_modtime ON %I', t, t);
+        EXECUTE format('CREATE TRIGGER update_%I_modtime BEFORE UPDATE ON %I FOR EACH ROW EXECUTE PROCEDURE update_modified_column()', t, t);
+    END LOOP;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS update_company_settings_modtime ON company_settings;
 CREATE TRIGGER update_company_settings_modtime BEFORE UPDATE ON company_settings FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
 
 -- ==========================================
 -- SEGURANÇA (RLS - ROW LEVEL SECURITY)
 -- ==========================================
--- Descomente as linhas abaixo se for usar autenticação do Supabase (Recomendado)
+-- Para simplificar inicialmente, vamos habilitar RLS e permitir acesso total a usuários autenticados.
+-- Em produção, você deve restringir as políticas.
 
--- ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE checklist_items ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE products ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE tickets ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE quotes ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE receipts ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE costs ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE appointments ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE company_settings ENABLE ROW LEVEL SECURITY;
-
--- Exemplo de política: Permitir acesso total a usuários autenticados
--- CREATE POLICY "Allow full access to authenticated users" ON clients FOR ALL TO authenticated USING (true) WITH CHECK (true);
+DO $$
+DECLARE
+    t text;
+BEGIN
+    FOR t IN 
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_type = 'BASE TABLE'
+    LOOP
+        EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
+        EXECUTE format('DROP POLICY IF EXISTS "Allow full access to authenticated users" ON %I', t);
+        EXECUTE format('CREATE POLICY "Allow full access to authenticated users" ON %I FOR ALL TO authenticated USING (true) WITH CHECK (true)', t);
+        -- Adicionar política para anon se necessário (ex: formulários públicos)
+        IF t = 'tickets' OR t = 'clients' THEN
+             EXECUTE format('DROP POLICY IF EXISTS "Allow anon insert" ON %I', t);
+             EXECUTE format('CREATE POLICY "Allow anon insert" ON %I FOR INSERT TO anon WITH CHECK (true)', t);
+        END IF;
+    END LOOP;
+END;
+$$;
