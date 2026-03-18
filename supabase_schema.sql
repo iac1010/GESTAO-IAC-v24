@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS tickets (
   budget_amount DECIMAL(10, 2),
   budget_approved BOOLEAN DEFAULT FALSE,
   color TEXT,
+  history JSONB, -- Array de objetos: [{id, date, note, userName}]
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

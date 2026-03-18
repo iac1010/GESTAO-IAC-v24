@@ -105,6 +105,12 @@ export type Ticket = {
     notes: string;
   }[];
   images?: string[];
+  history?: {
+    id: string;
+    date: string;
+    note: string;
+    userName?: string;
+  }[];
 };
 
 export type CompanyData = {
@@ -440,7 +446,7 @@ interface AppState {
   revokeVisitor: (id: string) => void;
 
   updateCriticalEvent: (id: string, status: CriticalEvent['status'], description: string) => void;
-
+  addTicketHistory: (ticketId: string, note: string, userName?: string) => void;
   setEnergyData: (data: EnergyRecord[]) => void;
 
   restoreData: (data: Partial<AppState>) => void;
@@ -597,7 +603,8 @@ export const useStore = create<AppState>()(
               photoBefore: t.photo_before,
               budgetAmount: t.budget_amount,
               budgetApproved: t.budget_approved,
-              color: t.color
+              color: t.color,
+              history: t.history
             }));
           }
 
@@ -2109,6 +2116,42 @@ export const useStore = create<AppState>()(
             message: `${event?.device}: ${description}`,
             type: 'ERROR'
           });
+        }
+      },
+
+      addTicketHistory: async (ticketId, note, userName) => {
+        const newEntry = {
+          id: uuidv4(),
+          date: new Date().toISOString(),
+          note,
+          userName
+        };
+        
+        let updatedHistory: any[] = [];
+        
+        set((state) => {
+          const ticket = state.tickets.find(t => t.id === ticketId);
+          updatedHistory = [...(ticket?.history || []), newEntry];
+          return {
+            tickets: state.tickets.map(t => 
+              t.id === ticketId ? { ...t, history: updatedHistory } : t
+            )
+          };
+        });
+
+        try {
+          const { error } = await supabase.from('tickets').update({ 
+            history: updatedHistory 
+          }).eq('id', ticketId);
+          if (error) {
+            console.error('Erro Supabase addTicketHistory:', error);
+            toast.error('Erro ao salvar histórico no servidor');
+          } else {
+            toast.success('Histórico atualizado');
+          }
+        } catch (e) { 
+          console.error(e);
+          toast.error('Erro de conexão ao salvar histórico');
         }
       },
 

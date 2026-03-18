@@ -18,7 +18,7 @@ export async function generatePdf(element: HTMLElement, fileName: string, format
     await new Promise(resolve => setTimeout(resolve, 800));
 
     const opt = {
-      margin: 0,
+      margin: [10, 10, 10, 10] as [number, number, number, number],
       filename: fileName,
       image: { type: 'jpeg' as const, quality: 0.98 },
       html2canvas: { 
@@ -27,6 +27,8 @@ export async function generatePdf(element: HTMLElement, fileName: string, format
         letterRendering: true,
         backgroundColor: '#ffffff',
         logging: false,
+        scrollY: 0,
+        scrollX: 0,
         // Tentar forçar a remoção de oklch/oklab se ele ainda estiver presente
         onclone: (clonedDoc: Document) => {
           // Remover QUALQUER tag de estilo que possa conter oklch/oklab e substituir por cores seguras

@@ -178,6 +178,16 @@
   .badge {
     @apply px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider;
   }
+
+  .page-break-inside-avoid {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .page-break-before-always {
+    page-break-before: always;
+    break-before: page;
+  }
 }
 
 @keyframes scan {

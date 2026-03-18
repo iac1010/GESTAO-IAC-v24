@@ -1,17 +1,20 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useStore } from '../store';
-import { Download, Printer, Edit, CheckCircle2, XCircle, DollarSign, Camera, MapPin, User } from 'lucide-react';
+import { Download, Printer, Edit, CheckCircle2, XCircle, DollarSign, Camera, MapPin, User, MessageSquare, Plus, QrCode } from 'lucide-react';
 import { BackButton } from '../components/BackButton';
 import { useRef, useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { generatePdf } from '../utils/pdfGenerator';
+import { toast } from 'react-hot-toast';
 
 export default function TicketView() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { tickets, clients, checklistItems, companyLogo, companyData, companySignature, updateTicket } = useStore();
+  const { tickets, clients, checklistItems, companyLogo, companyData, companySignature, updateTicket, addTicketHistory } = useStore();
   const printRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [budgetInput, setBudgetInput] = useState('');
+  const [historyNote, setHistoryNote] = useState('');
 
   const ticket = tickets.find(t => t.id === id);
   const client = clients.find(c => c.id === ticket?.clientId);
@@ -19,6 +22,13 @@ export default function TicketView() {
   if (!ticket) {
     return <div className="p-8 text-center text-gray-500">Ordem de Serviço não encontrada.</div>;
   }
+
+  const handleAddHistory = () => {
+    if (!historyNote.trim()) return;
+    addTicketHistory(ticket.id, historyNote, 'Admin'); // Using 'Admin' as placeholder for current user
+    setHistoryNote('');
+    toast.success('Nota adicionada ao histórico');
+  };
 
   const handleApproveBudget = () => {
     const amount = parseFloat(budgetInput);
@@ -118,10 +128,6 @@ export default function TicketView() {
           </div>
         </div>
 
-        <div 
-          ref={printRef} 
-          className="bg-white/5 backdrop-blur-md text-white rounded-3xl border border-white/10 shadow-2xl p-8 print:bg-white print:text-black print:shadow-none print:border-none print:p-12 print:block print:w-full print:max-w-none print:rounded-none"
-        >
         {/* Alerta de Aprovação Pendente */}
         {ticket.status === 'PENDENTE_APROVACAO' && (
           <div className="mb-8 bg-amber-500/20 border border-amber-500/30 rounded-2xl p-6 print:hidden">
@@ -162,80 +168,83 @@ export default function TicketView() {
             </div>
           </div>
         )}
+
+        <div 
+          ref={printRef} 
+          className="bg-white text-zinc-900 rounded-3xl shadow-2xl p-12 print:shadow-none print:p-0 print:w-full print:max-w-[210mm] print:mx-auto print:rounded-none"
+        >
         {/* Cabeçalho do Relatório */}
-        <div className="border-b border-white/10 pb-6 mb-6 flex justify-between items-start break-inside-avoid print:border-gray-300 print:pb-4 print:mb-4">
-          <div className="flex items-center gap-4">
-            {companyLogo && (
-              <img src={companyLogo} alt="Logo da Empresa" className="h-16 w-auto object-contain print:brightness-0" />
-            )}
-            <div>
-              <div className="flex items-center gap-3 mb-1">
-                {ticket.osNumber && (
-                  <span className="px-2 py-1 bg-white/10 text-white/70 rounded text-xs font-bold tracking-wider border border-white/10 print:bg-gray-200 print:text-gray-800 print:border-gray-300">
-                    {ticket.osNumber}
-                  </span>
-                )}
-                <h2 className="text-2xl font-bold text-white uppercase print:text-gray-900">
-                  {ticket.title || 'Relatório de Manutenção'}
-                </h2>
-              </div>
-              <p className="text-white/60 font-medium mt-1 print:text-gray-500">
-                {ticket.type === 'CORRETIVA' ? 'Manutenção Corretiva' : 'Manutenção Preventiva / Checklist'}
-                {ticket.maintenanceCategory && ` • ${ticket.maintenanceCategory}`}
-                {ticket.maintenanceSubcategory && ` - ${ticket.maintenanceSubcategory}`}
-              </p>
-              {companyData && (
-                <div className="mt-2 text-sm text-white/40 print:text-gray-500">
-                  <p className="font-bold text-white/60 print:text-gray-700">{companyData.name}</p>
-                  <p>CNPJ: {companyData.document} | Tel: {companyData.phone}</p>
-                  <p>{companyData.email} | {companyData.address}</p>
-                </div>
+        <div className="border-b border-zinc-200 pb-6 mb-8 flex justify-between items-start break-inside-avoid page-break-inside-avoid">
+          <div className="flex items-start gap-6">
+            <div className="flex flex-col items-center gap-2">
+              {companyLogo ? (
+                <img src={companyLogo} alt="Logo" className="h-20 w-auto object-contain" />
+              ) : (
+                <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center text-white text-3xl font-black">A</div>
               )}
+            </div>
+            <div className="flex flex-col">
+              <h2 className="text-3xl font-black text-zinc-900 uppercase tracking-tight leading-none mb-1">
+                RELATÓRIO DE MANUTENÇÃO
+              </h2>
+              <p className="text-zinc-500 font-medium text-lg mb-4">
+                {ticket.type === 'CORRETIVA' ? 'Manutenção Corretiva' : 'Manutenção Preventiva / Checklist'}
+              </p>
+              
+              <div className="text-sm text-zinc-600 space-y-0.5">
+                <p className="font-black text-zinc-800 text-base">{companyData?.name || 'IA COMPANY AUTOMAÇÃO'}</p>
+                <p>CNPJ: {companyData?.document || '122.342.2440/001-18'} | Tel: {companyData?.phone || '21 96888- 8183'}</p>
+                <p>{companyData?.email || 'joaoferreira@iacompany.tec.br'}</p>
+              </div>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-sm text-white/40 print:text-gray-500">Data da OS</p>
-            <p className="font-bold text-white print:text-gray-900">{new Date(ticket.date).toLocaleDateString('pt-BR')}</p>
-            <p className="text-sm text-white/40 mt-2 print:text-gray-500">Técnico Responsável</p>
-            <p className="font-bold text-white print:text-gray-900">{ticket.technician}</p>
+            <div className="mb-6">
+              <p className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-1">Data da OS</p>
+              <p className="text-xl font-black text-zinc-900">{new Date(ticket.date).toLocaleDateString('pt-BR')}</p>
+            </div>
+            <div>
+              <p className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-1">Técnico Responsável</p>
+              <p className="text-xl font-black text-zinc-900">{ticket.technician}</p>
+            </div>
           </div>
         </div>
 
         {/* Informações do Cliente */}
         {client && (
-          <div className="mb-8 bg-white/5 p-4 rounded-2xl border border-white/10 print:bg-transparent print:border-gray-300 print:border print:p-4 break-inside-avoid">
-            <div className="flex justify-between items-start mb-3">
-              <h3 className="text-xs font-black text-white/20 uppercase tracking-widest print:text-gray-500">Dados do Cliente</h3>
+          <div className="mb-10 bg-zinc-50 p-6 rounded-2xl border border-zinc-100 break-inside-avoid page-break-inside-avoid">
+            <div className="flex justify-between items-start mb-6">
+              <h3 className="text-xs font-black text-zinc-400 uppercase tracking-widest">Dados do Cliente</h3>
               {ticket.location && (
-                <div className="flex items-center gap-2 bg-primary/20 text-primary-light px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border border-primary/30">
+                <div className="flex items-center gap-2 bg-white text-zinc-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-zinc-200 shadow-sm">
                   <MapPin className="w-3 h-3" /> {ticket.location}
                 </div>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-4 print:gap-2">
+            <div className="grid grid-cols-2 gap-x-12 gap-y-6">
               <div className="break-inside-avoid">
-                <p className="text-xs text-white/40 print:text-gray-500">Nome / Condomínio</p>
-                <p className="font-medium text-white print:text-black">{client.name}</p>
+                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Nome / Condomínio</p>
+                <p className="font-bold text-zinc-900 text-lg leading-tight">{client.name}</p>
               </div>
               <div className="break-inside-avoid">
-                <p className="text-xs text-white/40 print:text-gray-500">CNPJ / CPF</p>
-                <p className="font-medium text-white print:text-black">{client.document || '-'}</p>
+                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">CNPJ / CPF</p>
+                <p className="font-bold text-zinc-900 text-lg leading-tight">{client.document || '-'}</p>
               </div>
               <div className="break-inside-avoid">
-                <p className="text-xs text-white/40 print:text-gray-500">Responsável</p>
-                <p className="font-medium text-white print:text-black">{client.contactPerson || '-'}</p>
+                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Responsável</p>
+                <p className="font-bold text-zinc-900 text-lg leading-tight">{client.contactPerson || '-'}</p>
               </div>
               <div className="break-inside-avoid">
-                <p className="text-xs text-white/40 print:text-gray-500">Telefone</p>
-                <p className="font-medium text-white print:text-black">{client.phone}</p>
+                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Telefone</p>
+                <p className="font-bold text-zinc-900 text-lg leading-tight">{client.phone}</p>
               </div>
               <div className="break-inside-avoid">
-                <p className="text-xs text-white/40 print:text-gray-500">E-mail</p>
-                <p className="font-medium text-white print:text-black">{client.email || '-'}</p>
+                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">E-mail</p>
+                <p className="font-bold text-zinc-900 text-lg leading-tight">{client.email || '-'}</p>
               </div>
               <div className="col-span-2 break-inside-avoid">
-                <p className="text-xs text-white/40 print:text-gray-500">Endereço</p>
-                <p className="font-medium text-white print:text-black">{client.address}</p>
+                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">Endereço</p>
+                <p className="font-bold text-zinc-900 text-lg leading-tight">{client.address}</p>
               </div>
             </div>
           </div>
@@ -243,162 +252,181 @@ export default function TicketView() {
 
         {/* Informações do Relatante (QR Code) */}
         {ticket.reportedBy && (
-          <div className="mb-8 bg-blue-500/5 p-4 rounded-2xl border border-blue-500/10 print:bg-transparent print:border-gray-300 print:border print:p-4 break-inside-avoid">
-            <h3 className="text-xs font-black text-blue-400/40 uppercase tracking-widest mb-3 print:text-gray-500">Relatado por (QR Code)</h3>
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
-                  <User className="w-5 h-5 text-blue-400" />
-                </div>
-                <div>
-                  <p className="text-xs text-white/40 print:text-gray-500">Nome / Unidade</p>
-                  <p className="font-medium text-white print:text-black">{ticket.reportedBy}</p>
-                </div>
-              </div>
-              {ticket.budgetAmount && (
-                <div className="flex items-center gap-3 border-l border-white/10 pl-6">
-                  <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center">
-                    <DollarSign className="w-5 h-5 text-emerald-400" />
+          <div className="mb-10 bg-blue-50 p-6 rounded-2xl border border-blue-100 break-inside-avoid page-break-inside-avoid">
+            <h3 className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-4">Relatado por (QR Code)</h3>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-8">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <User className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-xs text-white/40 print:text-gray-500">Orçamento Aprovado</p>
-                    <p className="font-bold text-emerald-400 print:text-black">R$ {ticket.budgetAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                    <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Nome / Unidade</p>
+                    <p className="font-bold text-zinc-900 text-lg leading-tight">{ticket.reportedBy}</p>
                   </div>
                 </div>
-              )}
+                {ticket.budgetAmount && (
+                  <div className="flex items-center gap-4 border-l border-zinc-200 pl-8">
+                    <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                      <DollarSign className="w-6 h-6 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-0.5">Orçamento Aprovado</p>
+                      <p className="font-black text-emerald-600 text-xl leading-tight">R$ {ticket.budgetAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="bg-white p-2 rounded-xl border border-zinc-200 shadow-sm">
+                <QRCodeSVG 
+                  value={`${window.location.origin}/tickets/${ticket.id}`} 
+                  size={64}
+                  level="H"
+                  includeMargin={false}
+                />
+              </div>
             </div>
           </div>
         )}
 
         {/* Conteúdo Específico */}
-        {ticket.type === 'CORRETIVA' ? (
-          <div className="space-y-6">
-            <div className="break-inside-avoid mb-6">
-              <h3 className="text-xs font-black text-white/20 uppercase tracking-widest mb-2 border-b border-white/5 pb-1 print:text-gray-500 print:border-gray-300">Problema Relatado</h3>
-              <p className="text-white/80 whitespace-pre-wrap print:text-black">{ticket.reportedProblem}</p>
-            </div>
-
-            <div className="break-inside-avoid mb-6">
-              <h3 className="text-xs font-black text-white/20 uppercase tracking-widest mb-2 border-b border-white/5 pb-1 print:text-gray-500 print:border-gray-300">Relato da Ordem de Serviço</h3>
-              <p className="text-white/80 whitespace-pre-wrap print:text-black">{ticket.serviceReport}</p>
-            </div>
-
-            {ticket.productsForQuote && (
-              <div className="bg-amber-500/10 p-4 rounded-2xl border border-amber-500/20 print:bg-transparent print:border-gray-300 print:border break-inside-avoid">
-                <h3 className="text-xs font-black text-amber-400/60 uppercase tracking-widest mb-2 print:text-gray-500">Produtos para Orçamento</h3>
-                <p className="text-amber-200 whitespace-pre-wrap print:text-black">{ticket.productsForQuote}</p>
+        <div className="space-y-10">
+          {ticket.type === 'CORRETIVA' ? (
+            <>
+              <div className="break-inside-avoid page-break-inside-avoid">
+                <h3 className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 border-b border-zinc-100 pb-2">Problema Relatado</h3>
+                <p className="text-zinc-800 whitespace-pre-wrap text-lg leading-relaxed">{ticket.reportedProblem}</p>
               </div>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <h3 className="text-xs font-black text-white/20 uppercase tracking-widest mb-4 border-b border-white/5 pb-2 print:text-gray-500 print:border-gray-300">Resultados do Checklist</h3>
+
+              <div className="break-inside-avoid page-break-inside-avoid">
+                <h3 className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 border-b border-zinc-100 pb-2">Relato da Ordem de Serviço</h3>
+                <p className="text-zinc-800 whitespace-pre-wrap text-lg leading-relaxed">{ticket.serviceReport || '.'}</p>
+              </div>
+            </>
+          ) : (
+            <div className="break-inside-avoid page-break-inside-avoid">
+              <h3 className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-4 border-b border-zinc-100 pb-2">Resultados do Checklist</h3>
+              <div className="overflow-hidden border border-zinc-200 rounded-2xl">
+                <table className="w-full text-left border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-zinc-50 text-zinc-500">
+                      <th className="p-4 font-black uppercase tracking-widest border-b border-zinc-200">Tarefa</th>
+                      <th className="p-4 font-black uppercase tracking-widest border-b border-zinc-200 w-24 text-center">Status</th>
+                      <th className="p-4 font-black uppercase tracking-widest border-b border-zinc-200">Observações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100">
+                    {ticket.checklistResults?.map(result => {
+                      const item = checklistItems.find(i => i.id === result.taskId);
+                      if (!item) return null;
+                      return (
+                        <tr key={result.taskId} className="break-inside-avoid">
+                          <td className="p-4 text-zinc-900 font-bold">{item.task}</td>
+                          <td className="p-4 text-center">
+                            <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest ${
+                              result.status === 'OK' ? 'bg-emerald-100 text-emerald-800' :
+                              result.status === 'NOK' ? 'bg-red-100 text-red-800' :
+                              'bg-zinc-100 text-zinc-500'
+                            }`}>
+                              {result.status}
+                            </span>
+                          </td>
+                          <td className="p-4 text-zinc-600">{result.notes || '-'}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Observações Gerais */}
+          {ticket.observations && (
+            <div className="break-inside-avoid page-break-inside-avoid">
+              <h3 className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-3 border-b border-zinc-100 pb-2">Observações Gerais</h3>
+              <p className="text-zinc-800 whitespace-pre-wrap text-lg leading-relaxed">{ticket.observations}</p>
+            </div>
+          )}
+
+          {/* Histórico de Atendimento */}
+          <div className="break-inside-avoid page-break-inside-avoid">
+            <h3 className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-4 border-b border-zinc-100 pb-2 flex items-center gap-2">
+              <MessageSquare className="w-4 h-4" /> Histórico de Atendimento
+            </h3>
+            <div className="space-y-4 mb-6">
+              {ticket.history && ticket.history.length > 0 ? (
+                ticket.history.map((entry) => (
+                  <div key={entry.id} className="bg-zinc-50 p-4 rounded-xl border border-zinc-100">
+                    <div className="flex justify-between items-start mb-1">
+                      <p className="text-xs font-black text-zinc-400 uppercase tracking-widest">
+                        {entry.userName || 'Sistema'} • {new Date(entry.date).toLocaleString('pt-BR')}
+                      </p>
+                    </div>
+                    <p className="text-zinc-800">{entry.note}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-zinc-400 italic">Nenhum histórico registrado.</p>
+              )}
+            </div>
             
-            <div className="overflow-hidden border border-white/10 rounded-2xl print:border-gray-300 print:border">
-              <table className="w-full text-left border-collapse text-sm">
-                <thead>
-                  <tr className="bg-white/5 text-white/60 print:bg-gray-100 print:text-gray-700">
-                    <th className="p-3 font-bold uppercase tracking-wider border-b border-white/5 print:border-gray-300">Tarefa</th>
-                    <th className="p-3 font-bold uppercase tracking-wider border-b border-white/5 w-24 text-center print:border-gray-300">Status</th>
-                    <th className="p-3 font-bold uppercase tracking-wider border-b border-white/5 print:border-gray-300">Observações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5 print:divide-gray-300">
-                  {ticket.checklistResults?.map(result => {
-                    const item = checklistItems.find(i => i.id === result.taskId);
-                    if (!item) return null;
-                    
-                    return (
-                      <tr key={result.taskId} className="break-inside-avoid">
-                        <td className="p-3 text-white/80 font-medium print:text-black">{item.task}</td>
-                        <td className="p-3 text-center">
-                          <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest ${
-                            result.status === 'OK' ? 'bg-emerald-500/20 text-emerald-400 print:bg-emerald-100 print:text-emerald-800' :
-                            result.status === 'NOK' ? 'bg-red-500/20 text-red-400 print:bg-red-100 print:text-red-800' :
-                            'bg-white/5 text-white/40 print:bg-gray-100 print:text-gray-800'
-                          }`}>
-                            {result.status}
-                          </span>
-                        </td>
-                        <td className="p-3 text-white/40 print:text-gray-700">{result.notes || '-'}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className="flex gap-3 print:hidden">
+              <input 
+                type="text" 
+                placeholder="Adicionar nota ao histórico..."
+                value={historyNote}
+                onChange={(e) => setHistoryNote(e.target.value)}
+                className="flex-1 bg-white border border-zinc-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-zinc-900"
+              />
+              <button 
+                onClick={handleAddHistory}
+                className="bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-primary/20"
+              >
+                <Plus className="w-5 h-5" /> Adicionar
+              </button>
             </div>
-          </div>
-        )}
-
-        {/* Observações Gerais */}
-        {ticket.observations && (
-          <div className="mt-8 break-inside-avoid">
-            <h3 className="text-xs font-black text-white/20 uppercase tracking-widest mb-2 border-b border-white/5 pb-1 print:text-gray-500 print:border-gray-300">Observações Gerais</h3>
-            <p className="text-white/80 whitespace-pre-wrap print:text-black">{ticket.observations}</p>
-          </div>
-        )}
-
-        {/* Histórico de Manutenção */}
-        <div className="mt-8 break-inside-avoid">
-          <h3 className="text-xs font-black text-white/20 uppercase tracking-widest mb-4 border-b border-white/5 pb-1 print:text-gray-500 print:border-gray-300">Histórico de Manutenção</h3>
-          <div className="space-y-3">
-            {tickets.filter(t => t.clientId === ticket.clientId && t.id !== ticket.id).slice(0, 3).map(prevTicket => (
-              <div key={prevTicket.id} className="flex justify-between items-center p-3 bg-white/5 rounded-xl border border-white/5 print:bg-transparent print:border-gray-300 print:border">
-                <div>
-                  <p className="font-bold text-white/80 print:text-black">{prevTicket.title}</p>
-                  <p className="text-xs text-white/40 print:text-gray-500">{new Date(prevTicket.date).toLocaleDateString('pt-BR')} • {prevTicket.type}</p>
-                </div>
-                <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest ${
-                  prevTicket.status === 'CONCLUIDO' ? 'bg-emerald-500/20 text-emerald-400 print:bg-emerald-100 print:text-emerald-800' : 'bg-white/5 text-white/40 print:bg-gray-100 print:text-gray-800'
-                }`}>
-                  {prevTicket.status}
-                </span>
-              </div>
-            ))}
-            {tickets.filter(t => t.clientId === ticket.clientId && t.id !== ticket.id).length === 0 && (
-              <p className="text-sm text-white/40 italic print:text-gray-500">Nenhum histórico anterior registrado para este cliente.</p>
-            )}
           </div>
         </div>
 
         {/* Assinaturas */}
-        <div className="mt-16 pt-8 grid grid-cols-2 gap-8 break-inside-avoid print:mt-12 print:pt-4">
+        <div className="mt-20 grid grid-cols-2 gap-20 break-inside-avoid page-break-inside-avoid">
           <div className="text-center">
-            <div className="flex flex-col items-center mb-2">
-              <div className="h-16 flex items-end justify-center w-full relative">
+            <div className="flex flex-col items-center mb-4">
+              <div className="h-24 flex items-end justify-center w-full relative">
                 {companySignature && (
-                  <img src={companySignature} alt="Assinatura" className="max-h-full max-w-full object-contain mb-[-8px] relative z-10 print:brightness-0" />
+                  <img src={companySignature} alt="Assinatura" className="max-h-full max-w-full object-contain mb-[-12px] relative z-10" />
                 )}
               </div>
-              <div className="border-t border-white/20 w-3/4 mx-auto print:border-gray-400"></div>
+              <div className="border-t-2 border-zinc-300 w-full"></div>
             </div>
-            <p className="font-bold text-white print:text-gray-900">Síndico</p>
-            <p className="text-xs text-white/40 uppercase tracking-widest print:text-gray-500">Assinatura</p>
+            <p className="font-black text-zinc-900 text-xl leading-tight">{ticket.technician}</p>
+            <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-1">Técnico Responsável</p>
           </div>
           <div className="text-center">
-            <div className="h-16"></div>
-            <div className="border-t border-white/20 w-3/4 mx-auto mb-2 print:border-gray-400"></div>
-            <p className="font-bold text-white print:text-gray-900">Cliente</p>
-            <p className="text-xs text-white/40 uppercase tracking-widest print:text-gray-500">Assinatura</p>
+            <div className="h-24"></div>
+            <div className="border-t-2 border-zinc-300 w-full mb-4"></div>
+            <p className="font-black text-zinc-900 text-xl leading-tight">{client.name}</p>
+            <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-1">Cliente / Síndico(a)</p>
           </div>
         </div>
 
         {/* Fotos do Serviço (Anexos) */}
         {(ticket.images?.length || 0) > 0 || ticket.photoBefore ? (
-          <div className="mt-16 print:mt-12 print:break-before-page">
-            <h3 className="text-xs font-black text-white/20 uppercase tracking-widest mb-4 border-b border-white/5 pb-1 print:text-gray-500 print:border-gray-300">Anexo: Fotos do Serviço</h3>
-            <div className="grid grid-cols-2 gap-4 print:gap-4">
+          <div className="mt-20 page-break-before-always">
+            <h3 className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-6 border-b border-zinc-100 pb-2">Anexo: Fotos do Serviço</h3>
+            <div className="grid grid-cols-2 gap-6">
               {ticket.photoBefore && (
-                <div className="rounded-2xl overflow-hidden border border-amber-500/30 print:border-gray-300 print:border break-inside-avoid relative">
-                  <img src={ticket.photoBefore} alt="Foto Inicial" className="w-full h-auto object-contain max-h-64 print:max-h-56" />
-                  <div className="absolute top-2 left-2 bg-amber-500 text-white text-[10px] font-black uppercase px-2 py-1 rounded flex items-center gap-1">
-                    <Camera className="w-3 h-3" /> Foto Inicial
+                <div className="rounded-2xl overflow-hidden border border-zinc-200 break-inside-avoid page-break-inside-avoid relative">
+                  <img src={ticket.photoBefore} alt="Foto Inicial" className="w-full h-auto object-contain max-h-80" />
+                  <div className="absolute top-4 left-4 bg-red-600 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-lg">
+                    <Camera className="w-3.5 h-3.5" /> Foto Inicial
                   </div>
                 </div>
               )}
               {ticket.images?.map((img, index) => (
-                <div key={index} className="rounded-2xl overflow-hidden border border-white/10 print:border-gray-300 print:border break-inside-avoid">
-                  <img src={img} alt={`Foto ${index + 1}`} className="w-full h-auto object-contain max-h-64 print:max-h-56" />
+                <div key={index} className="rounded-2xl overflow-hidden border border-zinc-200 break-inside-avoid page-break-inside-avoid">
+                  <img src={img} alt={`Foto ${index + 1}`} className="w-full h-auto object-contain max-h-80" />
                 </div>
               ))}
             </div>
