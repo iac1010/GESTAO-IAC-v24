@@ -238,7 +238,7 @@ export default function Settings() {
             
             <div className="flex-1 space-y-6">
               <p className="text-lg text-zinc-500 font-light leading-relaxed">
-                Adicione a logo da sua empresa para que ela apareça no menu lateral e nos relatórios em PDF gerados pelo sistema.
+                Adicione a logo da sua empresa para que ela apareça no dashboard, no ícone do navegador (favicon) e nos relatórios em PDF gerados pelo sistema.
               </p>
               <div className="p-4 bg-zinc-100 rounded-xl border border-zinc-200">
                 <p className="text-sm text-zinc-400 font-medium">

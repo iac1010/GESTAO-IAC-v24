@@ -102,12 +102,12 @@ function Layout({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const favicon = document.querySelector('link[rel="icon"]');
-    if (favicon && companyLogo) {
-      favicon.setAttribute('href', companyLogo);
-    } else if (favicon) {
-      favicon.setAttribute('href', 'https://api.iconify.design/lucide:building-2.svg?color=%23004a7c');
-    }
+    const favicons = document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]');
+    const defaultIcon = 'https://api.iconify.design/lucide:database.svg?color=%23004a7c&v=1';
+    const iconUrl = companyLogo ? `${companyLogo}${companyLogo.includes('?') ? '&' : '?'}v=${Date.now()}` : defaultIcon;
+    favicons.forEach(favicon => {
+      favicon.setAttribute('href', iconUrl);
+    });
   }, [companyLogo]);
 
   if (!isAuthenticated && location.pathname !== '/report') {
@@ -155,8 +155,17 @@ function Layout({ children }: { children: React.ReactNode }) {
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <Link to="/" className="text-xl font-bold hover:text-red-600 transition-colors">
-              Dashboard
+            <Link to="/" className="flex items-center gap-3 group">
+              {companyLogo ? (
+                <img src={companyLogo} alt="Logo" className="w-8 h-8 rounded-full object-cover border border-gray-200 dark:border-zinc-700" />
+              ) : (
+                <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                  <Database className="w-4 h-4" />
+                </div>
+              )}
+              <span className="text-xl font-bold group-hover:text-primary transition-colors">
+                Dashboard
+              </span>
             </Link>
           </div>
           

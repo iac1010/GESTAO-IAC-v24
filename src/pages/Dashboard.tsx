@@ -1007,6 +1007,16 @@ export default function Dashboard() {
         </svg>
       </div>
 
+      <div className="flex justify-center mb-8 relative z-10">
+        {companyLogo ? (
+          <img src={companyLogo} alt="Logo" className="h-20 w-auto object-contain drop-shadow-2xl" />
+        ) : (
+          <div className="p-4 bg-white/10 rounded-full backdrop-blur-md border border-white/20">
+            <Database className="w-12 h-12 text-white/60" />
+          </div>
+        )}
+      </div>
+
       <header className="mb-12 flex justify-between items-start relative z-10">
         <h1 className="text-6xl font-light tracking-tight text-white">Iniciar</h1>
         <div className="flex items-center gap-6">
@@ -1027,13 +1037,6 @@ export default function Dashboard() {
               Sair
             </button>
           </div>
-          {companyLogo ? (
-            <img src={companyLogo} alt="Logo" className="w-12 h-12 rounded-full object-cover border-2 border-white/20" />
-          ) : (
-            <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center text-white/60">
-              <Users className="w-6 h-6" />
-            </div>
-          )}
         </div>
       </header>
 
