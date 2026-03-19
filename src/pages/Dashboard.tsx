@@ -8,9 +8,12 @@ import {
   Columns, Clock, ClipboardCheck, AlertCircle, QrCode, AlertTriangle,
   BarChart3, Droplets, Zap, ShieldCheck, Megaphone,
   Box, UserCheck, Activity, Maximize2, CheckCircle2, Presentation, LogOut,
-  X, Download, FileUp, Database as DatabaseIcon, MessageSquare
+  X, Download, FileUp, Database as DatabaseIcon, MessageSquare, Target
 } from 'lucide-react';
 import { KanbanMirror } from '../components/KanbanMirror';
+import { SavingsMirror } from '../components/SavingsMirror';
+import { CostsMirror } from '../components/CostsMirror';
+import { WaterManagementMirror } from '../components/WaterManagementMirror';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   DndContext, 
@@ -149,7 +152,11 @@ export default function Dashboard() {
     notifications, supplyItems, payments, notices,
     packages, visitors, criticalEvents, energyData, logout,
     hiddenTiles, toggleTileVisibility, companySignature, companyData,
-    assemblies
+    assemblies, savingsGoals, consumptionReadings,
+    tileSizes: storeTileSizes,
+    tileOrder: storeTileOrder,
+    setTileSizes: updateStoreTileSizes,
+    setTileOrder: updateStoreTileOrder
   } = useStore();
 
   const [showBackupModal, setShowBackupModal] = useState(false);
@@ -278,19 +285,36 @@ export default function Dashboard() {
       id: 'financial',
       type: 'wide',
       component: (
-        <Link to="/financial" className="w-full h-full bg-gradient-to-br from-[#22b14c] to-[#1a943d] hover:brightness-110 transition-all p-4 flex flex-col justify-between group relative overflow-hidden border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] active:scale-95">
+        <Link to="/financial" className="w-full h-full bg-gradient-to-br from-[#22b14c] to-[#1a943d] hover:brightness-110 transition-all p-5 flex flex-col justify-between group relative overflow-hidden border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] active:scale-95">
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/20 pointer-events-none" />
-          <div className="flex flex-col justify-center items-center h-full relative z-10">
-            <TrendingUp className="w-10 h-10 md:w-14 md:h-14 text-white mb-2 drop-shadow-lg group-hover:translate-y-[-4px] transition-transform duration-500" />
-            <span className="text-xl md:text-3xl font-light drop-shadow-lg truncate w-full text-center">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(saldo)}
-            </span>
+          
+          <div className="flex-1 flex items-center justify-center relative z-10">
+            <CostsMirror 
+              costs={costs} 
+              className="!p-0 !bg-transparent !border-none !shadow-none !rounded-none w-full max-w-[280px]" 
+            />
           </div>
-          <div className="flex justify-between items-end relative z-10">
-            <span className="text-[10px] md:text-[11px] font-bold uppercase tracking-wider drop-shadow-md">Financeiro</span>
-            <div className="hidden md:flex items-center gap-2 bg-white/10 px-2 py-1 rounded-lg border border-white/10">
-              <ShieldCheck className="w-3 h-3 text-white/70" />
-              <span className="text-[9px] font-bold uppercase tracking-tight text-white/70">Pasta Digital Ativa</span>
+
+          <div className="flex justify-between items-end relative z-10 mt-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/20 rounded-xl border border-white/20 shadow-sm group-hover:scale-110 transition-transform duration-500">
+                <TrendingUp className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] drop-shadow-md">Financeiro</span>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[8px] font-bold text-white/50 uppercase tracking-widest">Pasta Digital Ativa</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col items-end">
+              <p className="text-[8px] font-black uppercase text-white/50 mb-0.5">Saldo Atual</p>
+              <div className="bg-black/20 px-3 py-1 rounded-full border border-white/10 backdrop-blur-md">
+                <span className="text-sm font-black drop-shadow-lg text-white">
+                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(saldo)}
+                </span>
+              </div>
             </div>
           </div>
         </Link>
@@ -560,29 +584,33 @@ export default function Dashboard() {
       id: 'accountability',
       type: 'wide',
       component: (
-        <Link to="/accountability" className="w-full h-full p-4 flex flex-col justify-between group relative overflow-hidden border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] active:scale-95 transition-all bg-gradient-to-br from-indigo-600 to-indigo-800">
+        <Link to="/accountability" className="w-full h-full bg-gradient-to-br from-[#4e44ce] to-[#3b3399] hover:brightness-110 transition-all p-5 flex flex-col justify-between group relative overflow-hidden border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] active:scale-95">
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/20 pointer-events-none" />
-          <div className="flex items-start gap-4 h-full relative z-10">
-            <div className="p-2 md:p-3 rounded-2xl border border-white/20 shadow-sm group-hover:scale-110 transition-transform duration-500 bg-white/10">
-              <BarChart3 className="w-8 h-8 md:w-10 md:h-10 text-white" />
-            </div>
-            <div className="overflow-hidden flex-1">
-              <p className="text-[9px] md:text-[10px] font-black uppercase text-white/70 mb-1 tracking-[0.2em]">Transparência</p>
-              <div className="space-y-1">
-                <p className="font-black text-sm md:text-xl truncate text-white leading-tight">Central de Custos</p>
-                <div className="flex items-center gap-2 text-white/80">
-                  <TrendingUp className="w-4 h-4 text-emerald-400" />
-                  <p className="text-xs md:text-sm font-bold text-white truncate">Fluxo em tempo real</p>
+          
+          <div className="flex-1 flex items-center justify-center relative z-10">
+            <CostsMirror 
+              costs={costs} 
+              className="!p-0 !bg-transparent !border-none !shadow-none !rounded-none w-full max-w-[280px]" 
+            />
+          </div>
+
+          <div className="flex justify-between items-end relative z-10 mt-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/20 rounded-xl border border-white/20 shadow-sm group-hover:scale-110 transition-transform duration-500">
+                <BarChart3 className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] drop-shadow-md">Central de Custos</span>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[8px] font-bold text-white/50 uppercase tracking-widest">Fluxo em tempo real</span>
                 </div>
               </div>
             </div>
-          </div>
-          <div className="flex justify-between items-end relative z-10">
-            <span className="hidden md:block text-[11px] font-black uppercase tracking-[0.2em] text-white/70">Relatórios</span>
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <p className="text-[8px] md:text-[10px] font-black uppercase text-white/50">Inadimplência</p>
-                <p className="text-sm md:text-lg font-black text-white">R$ {totalDelinquency.toLocaleString('pt-BR')}</p>
+            <div className="flex flex-col items-end">
+              <p className="text-[8px] font-black uppercase text-white/50 mb-0.5">Inadimplência</p>
+              <div className="bg-black/20 px-3 py-1 rounded-full border border-white/10 backdrop-blur-md">
+                <span className="text-sm font-black drop-shadow-lg text-white">R$ {totalDelinquency.toLocaleString('pt-BR')}</span>
               </div>
             </div>
           </div>
@@ -726,6 +754,85 @@ export default function Dashboard() {
       )
     },
     {
+      id: 'savings-goals',
+      type: 'wide',
+      component: (
+        <Link to="/accountability?tab=goals" className="w-full h-full bg-gradient-to-br from-[#059669] to-[#047857] hover:brightness-110 transition-all p-5 flex flex-col justify-between group relative overflow-hidden border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] active:scale-95">
+          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/20 pointer-events-none" />
+          
+          <div className="flex-1 flex items-center justify-center relative z-10">
+            <SavingsMirror 
+              goals={savingsGoals} 
+              className="!p-0 !bg-transparent !border-none !shadow-none !rounded-none w-full max-w-[280px]" 
+            />
+          </div>
+
+          <div className="flex justify-between items-end relative z-10 mt-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/20 rounded-xl border border-white/20 shadow-sm group-hover:scale-110 transition-transform duration-500">
+                <Target className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] drop-shadow-md">Projetos & Metas</span>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  <span className="text-[8px] font-bold text-white/50 uppercase tracking-widest">Progresso Ativo</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col items-end">
+              <p className="text-[8px] font-black uppercase text-white/50 mb-0.5">Concluídos</p>
+              <div className="bg-black/20 px-3 py-1 rounded-full border border-white/10 backdrop-blur-md">
+                <span className="text-sm font-black drop-shadow-lg text-white">
+                  {savingsGoals.filter(g => g.status === 'COMPLETED').length}
+                </span>
+              </div>
+            </div>
+          </div>
+        </Link>
+      )
+    },
+    {
+      id: 'water-management',
+      type: 'wide',
+      component: (
+        <Link to="/consumption" className="w-full h-full bg-gradient-to-br from-[#2563eb] to-[#1e40af] hover:brightness-110 transition-all p-5 flex flex-col justify-between group relative overflow-hidden border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] active:scale-95">
+          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/20 pointer-events-none" />
+          
+          <div className="flex-1 flex items-center justify-center relative z-10">
+            <WaterManagementMirror 
+              readings={consumptionReadings} 
+              events={criticalEvents}
+              className="!p-0 !bg-transparent !border-none !shadow-none !rounded-none w-full max-w-[280px]" 
+            />
+          </div>
+
+          <div className="flex justify-between items-end relative z-10 mt-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/20 rounded-xl border border-white/20 shadow-sm group-hover:scale-110 transition-transform duration-500">
+                <Droplets className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] drop-shadow-md text-white">Gestão Hídrica</span>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                  <span className="text-[8px] font-bold text-white/50 uppercase tracking-widest">Monitoramento Smart</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col items-end">
+              <p className="text-[8px] font-black uppercase text-white/50 mb-0.5">Alertas</p>
+              <div className="bg-black/20 px-3 py-1 rounded-full border border-white/10 backdrop-blur-md">
+                <span className="text-sm font-black drop-shadow-lg text-white">
+                  {criticalEvents.filter(e => e.type === 'PUMP' && e.status !== 'NORMAL').length}
+                </span>
+              </div>
+            </div>
+          </div>
+        </Link>
+      )
+    },
+    {
       id: 'demo-data',
       type: 'square',
       component: (
@@ -740,31 +847,38 @@ export default function Dashboard() {
     }
   ];
 
-  const [tileSizes, setTileSizes] = useState<Record<string, 'small' | 'medium' | 'large'>>(() => {
-    const saved = localStorage.getItem('dashboardTileSizes');
-    if (saved) return JSON.parse(saved);
-    return {};
-  });
+  const [tileSizes, setTileSizes] = useState<Record<string, 'small' | 'medium' | 'large'>>({});
+  const [tiles, setTiles] = useState<TileData[]>(initialTiles);
 
-  const [tiles, setTiles] = useState<TileData[]>(() => {
-    const savedOrder = localStorage.getItem('dashboardTileOrder');
-    if (savedOrder) {
-      const order = JSON.parse(savedOrder) as string[];
-      return order.map(id => initialTiles.find(t => t.id === id)).filter(Boolean) as TileData[];
+  // Initialize tiles and sizes from store
+  useEffect(() => {
+    if (storeTileSizes && Object.keys(storeTileSizes).length > 0) {
+      setTileSizes(storeTileSizes);
     }
-    return initialTiles;
-  });
+  }, [storeTileSizes]);
+
+  useEffect(() => {
+    if (storeTileOrder && storeTileOrder.length > 0) {
+      const orderedTiles = storeTileOrder
+        .map(id => initialTiles.find(t => t.id === id))
+        .filter(Boolean) as TileData[];
+      
+      // Add any new tiles that are not in the saved order
+      const newTiles = initialTiles.filter(t => !storeTileOrder.includes(t.id));
+      setTiles([...orderedTiles, ...newTiles]);
+    } else {
+      setTiles(initialTiles);
+    }
+  }, [storeTileOrder]);
 
   const handleResize = (id: string, defaultType: 'wide' | 'square', e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setTileSizes(prev => {
-      const currentSize = prev[id] || (defaultType === 'wide' ? 'medium' : 'small');
-      const nextSize: 'small' | 'medium' | 'large' = currentSize === 'small' ? 'medium' : currentSize === 'medium' ? 'large' : 'small';
-      const newSizes = { ...prev, [id]: nextSize };
-      localStorage.setItem('dashboardTileSizes', JSON.stringify(newSizes));
-      return newSizes;
-    });
+    const currentSize = tileSizes[id] || (defaultType === 'wide' ? 'medium' : 'small');
+    const nextSize: 'small' | 'medium' | 'large' = currentSize === 'small' ? 'medium' : currentSize === 'medium' ? 'large' : 'small';
+    const newSizes = { ...tileSizes, [id]: nextSize };
+    setTileSizes(newSizes);
+    updateStoreTileSizes(newSizes);
   };
 
   // Sincronizar dados dinâmicos nos tiles quando o store mudar
@@ -776,7 +890,8 @@ export default function Dashboard() {
   }, [
     clients.length, tickets.length, products.length, receipts.length, 
     saldo, nextAppointment, notices.length, packages.length, 
-    visitors.length, criticalEvents, energyData.length, supplyItems.length, payments.length, scheduledMaintenances.length
+    visitors.length, criticalEvents, energyData.length, supplyItems.length, payments.length, scheduledMaintenances.length,
+    savingsGoals.length, costs.length, consumptionReadings.length
   ]);
 
   const handleExportBackup = () => {
@@ -834,13 +949,11 @@ export default function Dashboard() {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      setTiles((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        const newItems = arrayMove(items, oldIndex, newIndex);
-        localStorage.setItem('dashboardTileOrder', JSON.stringify(newItems.map(t => t.id)));
-        return newItems;
-      });
+      const oldIndex = tiles.findIndex((item) => item.id === active.id);
+      const newIndex = tiles.findIndex((item) => item.id === over.id);
+      const newItems = arrayMove(tiles, oldIndex, newIndex);
+      setTiles(newItems);
+      updateStoreTileOrder(newItems.map(t => t.id));
     }
   }
 

@@ -38,7 +38,7 @@ export default function Settings() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Check file size (max 2MB to avoid localStorage limits)
+      // Check file size (max 2MB to avoid database/storage limits)
       if (file.size > 2 * 1024 * 1024) {
         import('react-hot-toast').then(({ toast }) => {
           toast.error('A imagem é muito grande. O limite é 2MB.');

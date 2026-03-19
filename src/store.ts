@@ -61,6 +61,17 @@ export type Cost = {
   category: string;
 };
 
+export type SavingsGoal = {
+  id: string;
+  title: string;
+  targetAmount: number;
+  currentAmount: number;
+  deadline: string;
+  category: string;
+  icon: string;
+  status: 'IN_PROGRESS' | 'COMPLETED' | 'PAUSED';
+};
+
 export type Appointment = {
   id: string;
   title: string;
@@ -346,6 +357,7 @@ interface AppState {
   visitors: Visitor[];
   criticalEvents: CriticalEvent[];
   energyData: EnergyRecord[];
+  savingsGoals: SavingsGoal[];
   companyLogo: string | null;
   companySignature: string | null;
   companyData: CompanyData | null;
@@ -354,6 +366,8 @@ interface AppState {
   isAuthenticated: boolean;
   menuOrder: string[];
   hiddenTiles: string[];
+  tileSizes: { [key: string]: 'small' | 'medium' | 'large' };
+  tileOrder: string[] | null;
   isLoading: boolean;
   
   fetchInitialData: () => Promise<void>;
@@ -361,6 +375,8 @@ interface AppState {
   setCompanySignature: (signature: string | null) => Promise<void>;
   setCompanyData: (data: CompanyData) => Promise<void>;
   setMenuOrder: (order: string[]) => Promise<void>;
+  setTileSizes: (sizes: { [key: string]: 'small' | 'medium' | 'large' }) => Promise<void>;
+  setTileOrder: (order: string[]) => Promise<void>;
   toggleTileVisibility: (tileId: string) => void;
   toggleTheme: () => Promise<void>;
   login: (user: string, pass: string) => boolean;
@@ -448,6 +464,10 @@ interface AppState {
   addTicketHistory: (ticketId: string, note: string, userName?: string) => void;
   setEnergyData: (data: EnergyRecord[]) => void;
 
+  addSavingsGoal: (goal: Omit<SavingsGoal, 'id'>) => Promise<void>;
+  updateSavingsGoal: (id: string, goal: Partial<SavingsGoal>) => Promise<void>;
+  deleteSavingsGoal: (id: string) => Promise<void>;
+
   restoreData: (data: Partial<AppState>) => void;
 }
 
@@ -475,6 +495,7 @@ export const useStore = create<AppState>()(
       visitors: [],
       criticalEvents: [],
       energyData: [],
+      savingsGoals: [],
       assemblies: [],
       companyLogo: '',
       companySignature: '',
@@ -491,6 +512,8 @@ export const useStore = create<AppState>()(
       isAuthenticated: false,
       menuOrder: ['dashboard', 'accountability', 'consumption', 'clients', 'products', 'supplies', 'tickets', 'kanban', 'quotes', 'receipts', 'financial', 'calendar', 'settings'],
       hiddenTiles: [],
+      tileSizes: {},
+      tileOrder: null,
       isLoading: false,
       
       fetchInitialData: async () => {
@@ -520,7 +543,8 @@ export const useStore = create<AppState>()(
             supabase.from('digital_folder').select('*'),
             supabase.from('supply_quotations').select('*'),
             supabase.from('company_settings').select('*').single(),
-            supabase.from('notifications').select('*')
+            supabase.from('notifications').select('*'),
+            supabase.from('savings_goals').select('*')
           ]);
 
           const [
@@ -530,7 +554,7 @@ export const useStore = create<AppState>()(
             scheduledMaintenancesRes, consumptionReadingsRes, 
             assembliesRes, noticesRes, packagesRes, visitorsRes, 
             criticalEventsRes, digitalFolderRes, supplyQuotationsRes, 
-            companySettingsRes, notificationsRes
+            companySettingsRes, notificationsRes, savingsGoalsRes
           ] = results;
 
           // Check for errors
@@ -830,6 +854,19 @@ export const useStore = create<AppState>()(
             }));
           }
 
+          if (savingsGoalsRes.data) {
+            newState.savingsGoals = savingsGoalsRes.data.map(g => ({
+              id: g.id,
+              title: g.title,
+              targetAmount: g.target_amount,
+              currentAmount: g.current_amount,
+              deadline: g.deadline,
+              category: g.category,
+              icon: g.icon,
+              status: g.status as any
+            }));
+          }
+
           if (companySettingsRes.data) {
             const companySettingsData = companySettingsRes.data;
             newState.companySettingsId = companySettingsData.id;
@@ -846,6 +883,12 @@ export const useStore = create<AppState>()(
             newState.theme = companySettingsData.theme as any;
             if (companySettingsData.menu_order) {
               newState.menuOrder = companySettingsData.menu_order;
+            }
+            if (companySettingsData.tile_sizes) {
+              newState.tileSizes = companySettingsData.tile_sizes;
+            }
+            if (companySettingsData.tile_order) {
+              newState.tileOrder = companySettingsData.tile_order;
             }
           }
 
@@ -897,6 +940,24 @@ export const useStore = create<AppState>()(
         if (id) {
           try {
             await supabase.from('company_settings').update({ menu_order: order }).eq('id', id);
+          } catch (e) { console.error(e); }
+        }
+      },
+      setTileSizes: async (sizes) => {
+        set({ tileSizes: sizes });
+        const id = get().companySettingsId;
+        if (id) {
+          try {
+            await supabase.from('company_settings').update({ tile_sizes: sizes }).eq('id', id);
+          } catch (e) { console.error(e); }
+        }
+      },
+      setTileOrder: async (order) => {
+        set({ tileOrder: order });
+        const id = get().companySettingsId;
+        if (id) {
+          try {
+            await supabase.from('company_settings').update({ tile_order: order }).eq('id', id);
           } catch (e) { console.error(e); }
         }
       },
@@ -2199,6 +2260,65 @@ export const useStore = create<AppState>()(
           try {
             await supabase.from('company_settings').update({ energy_data: energyData }).eq('id', id);
           } catch (e) { console.error(e); }
+        }
+      },
+
+      addSavingsGoal: async (goal) => {
+        const id = crypto.randomUUID();
+        const newGoal = { ...goal, id };
+        set((state) => ({ savingsGoals: [...state.savingsGoals, newGoal] }));
+        try {
+          const { error } = await supabase.from('savings_goals').insert({
+            id,
+            title: goal.title,
+            target_amount: goal.targetAmount,
+            current_amount: goal.currentAmount,
+            deadline: goal.deadline,
+            category: goal.category,
+            icon: goal.icon,
+            status: goal.status
+          });
+          if (error) throw error;
+          toast.success('Meta de economia adicionada!');
+        } catch (e) {
+          console.error(e);
+          toast.error('Erro ao salvar meta');
+        }
+      },
+
+      updateSavingsGoal: async (id, goal) => {
+        set((state) => ({
+          savingsGoals: state.savingsGoals.map((g) => (g.id === id ? { ...g, ...goal } : g))
+        }));
+        try {
+          const updateData: any = {};
+          if (goal.title) updateData.title = goal.title;
+          if (goal.targetAmount !== undefined) updateData.target_amount = goal.targetAmount;
+          if (goal.currentAmount !== undefined) updateData.current_amount = goal.currentAmount;
+          if (goal.deadline) updateData.deadline = goal.deadline;
+          if (goal.category) updateData.category = goal.category;
+          if (goal.icon) updateData.icon = goal.icon;
+          if (goal.status) updateData.status = goal.status;
+
+          const { error } = await supabase.from('savings_goals').update(updateData).eq('id', id);
+          if (error) throw error;
+        } catch (e) {
+          console.error(e);
+          toast.error('Erro ao atualizar meta');
+        }
+      },
+
+      deleteSavingsGoal: async (id) => {
+        set((state) => ({
+          savingsGoals: state.savingsGoals.filter((g) => g.id !== id)
+        }));
+        try {
+          const { error } = await supabase.from('savings_goals').delete().eq('id', id);
+          if (error) throw error;
+          toast.success('Meta removida');
+        } catch (e) {
+          console.error(e);
+          toast.error('Erro ao remover meta');
         }
       },
 

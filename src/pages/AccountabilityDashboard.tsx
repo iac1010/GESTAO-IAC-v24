@@ -1,5 +1,5 @@
-import { useMemo, useState, useRef, useEffect } from 'react';
-import { useStore, Payment, LegalAgreement, Client } from '../store';
+import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
+import { useStore, Payment, LegalAgreement, Client, SavingsGoal } from '../store';
 import { BackButton } from '../components/BackButton';
 import { 
   TrendingUp, 
@@ -25,7 +25,15 @@ import {
   CheckCircle,
   Upload,
   UserCheck,
-  Plus
+  Plus,
+  Target,
+  Trophy,
+  Rocket,
+  Gamepad2,
+  Coins,
+  ArrowRight,
+  Sparkles,
+  Zap
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -61,29 +69,47 @@ export default function AccountabilityDashboard() {
     companyData,
     digitalFolder,
     validateDigitalFolderItem,
-    addDigitalFolderItem
+    addDigitalFolderItem,
+    savingsGoals,
+    addSavingsGoal,
+    updateSavingsGoal,
+    deleteSavingsGoal
   } = useStore();
   const reportRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAddCostModalOpen, setIsAddCostModalOpen] = useState(false);
+  const [isAddGoalModalOpen, setIsAddGoalModalOpen] = useState(false);
   const [newCost, setNewCost] = useState({
     description: '',
     value: '',
     category: 'Colaboradores',
     date: format(new Date(), 'yyyy-MM-dd')
   });
-  const [activeTab, setActiveTab] = useState<'financial' | 'folder'>(
-    (searchParams.get('tab') as 'financial' | 'folder') || 'financial'
+  const [newGoal, setNewGoal] = useState({
+    title: '',
+    targetAmount: '',
+    currentAmount: '0',
+    deadline: format(new Date(), 'yyyy-MM-dd'),
+    category: 'Obra',
+    icon: 'Rocket'
+  });
+  const [activeTab, setActiveTab] = useState<'financial' | 'folder' | 'goals'>(
+    (searchParams.get('tab') as 'financial' | 'folder' | 'goals') || 'financial'
   );
 
   useEffect(() => {
     const tab = searchParams.get('tab');
-    if (tab === 'folder' || tab === 'financial') {
+    if (tab === 'folder' || tab === 'financial' || tab === 'goals') {
       setActiveTab(tab);
     }
   }, [searchParams]);
 
-  const handleTabChange = (tab: 'financial' | 'folder') => {
+  const totalSaved = savingsGoals.reduce((acc, goal) => acc + goal.currentAmount, 0);
+  const totalTarget = savingsGoals.reduce((acc, goal) => acc + goal.targetAmount, 0);
+  const overallProgress = totalTarget > 0 ? (totalSaved / totalTarget) * 100 : 0;
+  const completedGoals = savingsGoals.filter(g => g.status === 'COMPLETED').length;
+
+  const handleTabChange = (tab: 'financial' | 'folder' | 'goals') => {
     setActiveTab(tab);
     setSearchParams({ tab });
   };
@@ -200,6 +226,46 @@ export default function AccountabilityDashboard() {
     });
   };
 
+  const handleAddGoal = async () => {
+    if (!newGoal.title || !newGoal.targetAmount) return;
+    
+    await addSavingsGoal({
+      title: newGoal.title,
+      targetAmount: parseFloat(newGoal.targetAmount),
+      currentAmount: parseFloat(newGoal.currentAmount),
+      deadline: newGoal.deadline,
+      category: newGoal.category,
+      icon: newGoal.icon,
+      status: 'IN_PROGRESS'
+    });
+
+    setIsAddGoalModalOpen(false);
+    setNewGoal({
+      title: '',
+      targetAmount: '',
+      currentAmount: '0',
+      deadline: format(new Date(), 'yyyy-MM-dd'),
+      category: 'Obra',
+      icon: 'Rocket'
+    });
+  };
+
+  const handleUpdateGoalAmount = async (id: string, currentAmount: number, increment: number) => {
+    const newAmount = Math.max(0, currentAmount + increment);
+    await updateSavingsGoal(id, { currentAmount: newAmount });
+  };
+
+  const getGoalIcon = (iconName: string) => {
+    switch (iconName) {
+      case 'Rocket': return <Rocket className="w-6 h-6" />;
+      case 'Target': return <Target className="w-6 h-6" />;
+      case 'Trophy': return <Trophy className="w-6 h-6" />;
+      case 'Coins': return <Coins className="w-6 h-6" />;
+      case 'Zap': return <Zap className="w-6 h-6" />;
+      default: return <Target className="w-6 h-6" />;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#004a7c] text-white -m-8 p-8 md:p-12 overflow-x-hidden relative">
       {/* High-Quality Background Image (4K Feel) */}
@@ -244,6 +310,12 @@ export default function AccountabilityDashboard() {
             >
               Pasta Digital
             </button>
+            <button 
+              onClick={() => handleTabChange('goals')}
+              className={`px-4 md:px-6 py-2 rounded-xl font-bold text-xs md:text-sm transition-all ${activeTab === 'goals' ? 'bg-white text-[#004a7c] shadow-lg' : 'text-white/60 hover:text-white'}`}
+            >
+              Projetos & Metas
+            </button>
           </div>
           <button 
             onClick={handleExportPDF}
@@ -271,64 +343,76 @@ export default function AccountabilityDashboard() {
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white/5 p-8 rounded-[40px] border border-white/10 backdrop-blur-md"
+            className="bg-white/5 p-8 rounded-[40px] border border-white/10 backdrop-blur-md group hover:bg-white/10 transition-all duration-500"
           >
             <div className="flex items-center justify-between mb-4">
-              <div className="bg-emerald-500/20 p-3 rounded-2xl">
+              <div className="bg-emerald-500/20 p-3 rounded-2xl group-hover:scale-110 transition-transform">
                 <DollarSign className="w-6 h-6 text-emerald-400" />
               </div>
               <span className="text-[10px] font-black text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full">Mensal</span>
             </div>
             <p className="text-white/40 text-xs font-black uppercase tracking-widest mb-1">Custo Operacional Total</p>
             <h3 className="text-3xl font-black text-white">R$ {totalOperationalCost.toLocaleString('pt-BR')}</h3>
+            <div className="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+              <div className="h-full bg-emerald-500 w-[65%]" />
+            </div>
           </motion.div>
 
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white/5 p-8 rounded-[40px] border border-white/10 backdrop-blur-md"
+            className="bg-white/5 p-8 rounded-[40px] border border-white/10 backdrop-blur-md group hover:bg-white/10 transition-all duration-500"
           >
             <div className="flex items-center justify-between mb-4">
-              <div className="bg-blue-500/20 p-3 rounded-2xl">
+              <div className="bg-blue-500/20 p-3 rounded-2xl group-hover:scale-110 transition-transform">
                 <UserCheck className="w-6 h-6 text-blue-400" />
               </div>
               <span className="text-[10px] font-black text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full">{operationalCosts.staff.length} Colaboradores</span>
             </div>
             <p className="text-white/40 text-xs font-black uppercase tracking-widest mb-1">Folha de Pagamento</p>
             <h3 className="text-3xl font-black text-white">R$ {totalStaffCost.toLocaleString('pt-BR')}</h3>
+            <div className="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+              <div className="h-full bg-blue-500 w-[45%]" />
+            </div>
           </motion.div>
 
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white/5 p-8 rounded-[40px] border border-white/10 backdrop-blur-md"
+            className="bg-white/5 p-8 rounded-[40px] border border-white/10 backdrop-blur-md group hover:bg-white/10 transition-all duration-500"
           >
             <div className="flex items-center justify-between mb-4">
-              <div className="bg-indigo-500/20 p-3 rounded-2xl">
+              <div className="bg-indigo-500/20 p-3 rounded-2xl group-hover:scale-110 transition-transform">
                 <ShieldCheck className="w-6 h-6 text-indigo-400" />
               </div>
               <span className="text-[10px] font-black text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full">Síndico</span>
             </div>
             <p className="text-white/40 text-xs font-black uppercase tracking-widest mb-1">Honorários Gestão</p>
             <h3 className="text-3xl font-black text-white">R$ {totalManagerCost.toLocaleString('pt-BR')}</h3>
+            <div className="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+              <div className="h-full bg-indigo-500 w-[80%]" />
+            </div>
           </motion.div>
 
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-white/5 p-8 rounded-[40px] border border-white/10 backdrop-blur-md"
+            className="bg-white/5 p-8 rounded-[40px] border border-white/10 backdrop-blur-md group hover:bg-white/10 transition-all duration-500"
           >
             <div className="flex items-center justify-between mb-4">
-              <div className="bg-amber-500/20 p-3 rounded-2xl">
+              <div className="bg-amber-500/20 p-3 rounded-2xl group-hover:scale-110 transition-transform">
                 <TrendingUp className="w-6 h-6 text-amber-400" />
               </div>
               <span className="text-[10px] font-black text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full">+2.5% vs Mês Ant.</span>
             </div>
             <p className="text-white/40 text-xs font-black uppercase tracking-widest mb-1">Encargos & Outros</p>
             <h3 className="text-3xl font-black text-white">R$ 0</h3>
+            <div className="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
+              <div className="h-full bg-amber-500 w-[15%]" />
+            </div>
           </motion.div>
         </div>
 
@@ -400,6 +484,94 @@ export default function AccountabilityDashboard() {
           </motion.div>
         </div>
 
+        {/* Demonstrativo de Projetos & Metas */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white/5 p-8 rounded-[40px] border border-white/10 backdrop-blur-md"
+        >
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+            <div>
+              <h3 className="text-2xl font-black flex items-center gap-3">
+                <Target className="w-6 h-6 text-amber-400" /> Demonstrativo de Projetos & Metas
+              </h3>
+              <p className="text-white/40 text-sm mt-1">Resumo do planejamento e economia para investimentos futuros</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">Total Economizado</p>
+                <p className="text-2xl font-black text-emerald-400">R$ {totalSaved.toLocaleString('pt-BR')}</p>
+              </div>
+              <div className="h-12 w-px bg-white/10 mx-2" />
+              <div className="text-right">
+                <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">Progresso Geral</p>
+                <p className="text-2xl font-black text-white">{overallProgress.toFixed(1)}%</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {savingsGoals.slice(0, 3).map((goal) => (
+              <div key={goal.id} className="bg-white/5 p-6 rounded-3xl border border-white/10 hover:bg-white/10 transition-all group">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white/10 rounded-xl group-hover:scale-110 transition-transform">
+                      {getGoalIcon(goal.icon)}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white text-sm">{goal.title}</h4>
+                      <p className="text-[10px] text-white/40 uppercase font-black tracking-widest">{goal.category}</p>
+                    </div>
+                  </div>
+                  {goal.status === 'COMPLETED' && (
+                    <div className="bg-emerald-500/20 p-1.5 rounded-full">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    </div>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs font-bold">
+                    <span className="text-white/60">R$ {goal.currentAmount.toLocaleString('pt-BR')}</span>
+                    <span className="text-white/40">R$ {goal.targetAmount.toLocaleString('pt-BR')}</span>
+                  </div>
+                  <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(goal.currentAmount / goal.targetAmount) * 100}%` }}
+                      className={`h-full ${goal.status === 'COMPLETED' ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            {savingsGoals.length > 3 && (
+              <button 
+                onClick={() => setActiveTab('goals')}
+                className="bg-white/5 p-6 rounded-3xl border border-dashed border-white/20 flex flex-col items-center justify-center gap-2 hover:bg-white/10 transition-all text-white/40 hover:text-white"
+              >
+                <Plus className="w-6 h-6" />
+                <span className="text-xs font-black uppercase tracking-widest">Ver mais {savingsGoals.length - 3} metas</span>
+              </button>
+            )}
+
+            {savingsGoals.length === 0 && (
+              <div className="col-span-full py-12 text-center border border-dashed border-white/10 rounded-3xl">
+                <Target className="w-12 h-12 text-white/10 mx-auto mb-4" />
+                <p className="text-white/40 font-bold">Nenhuma meta definida ainda.</p>
+                <button 
+                  onClick={() => setActiveTab('goals')}
+                  className="mt-4 text-amber-400 text-sm font-black uppercase tracking-widest hover:underline"
+                >
+                  Começar Planejamento
+                </button>
+              </div>
+            )}
+          </div>
+        </motion.div>
+
         {/* Staff Table */}
         <div className="grid grid-cols-1 gap-8">
           <div className="bg-white/5 rounded-[40px] border border-white/10 backdrop-blur-md overflow-hidden">
@@ -455,7 +627,7 @@ export default function AccountabilityDashboard() {
           </div>
         </div>
       </div>
-      ) : (
+      ) : activeTab === 'folder' ? (
         <div className="space-y-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
@@ -646,6 +818,161 @@ export default function AccountabilityDashboard() {
             </div>
           </div>
         </div>
+      ) : (
+        <div className="space-y-8 relative z-10">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+            <div>
+              <h2 className="text-3xl font-black flex items-center gap-3">
+                <Gamepad2 className="w-8 h-8 text-indigo-400" /> Game de Economia
+              </h2>
+              <p className="text-white/60 mt-2">Junte dinheiro para projetos futuros e ganhe prêmios!</p>
+            </div>
+            <button 
+              onClick={() => setIsAddGoalModalOpen(true)}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-4 rounded-2xl font-black flex items-center gap-3 shadow-2xl shadow-indigo-500/20 transition-all"
+            >
+              <Plus className="w-6 h-6" /> Novo Projeto
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {savingsGoals.map((goal) => {
+              const progress = Math.min(100, (goal.currentAmount / goal.targetAmount) * 100);
+              const isCompleted = goal.status === 'COMPLETED' || progress >= 100;
+
+              return (
+                <motion.div 
+                  key={goal.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className={`relative group bg-white/5 border border-white/10 rounded-[40px] p-8 overflow-hidden transition-all hover:bg-white/10 ${isCompleted ? 'border-emerald-500/30' : ''}`}
+                >
+                  {/* Progress Glow */}
+                  <div 
+                    className={`absolute bottom-0 left-0 h-1 transition-all duration-1000 ${isCompleted ? 'bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.5)]' : 'bg-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.5)]'}`}
+                    style={{ width: `${progress}%` }}
+                  />
+
+                  <div className="flex items-start justify-between mb-6">
+                    <div className={`p-4 rounded-3xl ${isCompleted ? 'bg-emerald-500/20 text-emerald-400' : 'bg-indigo-500/20 text-indigo-400'}`}>
+                      {getGoalIcon(goal.icon)}
+                    </div>
+                    <div className="text-right">
+                      <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${isCompleted ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/10 text-white/60'}`}>
+                        {goal.category}
+                      </span>
+                      <p className="text-xs text-white/40 mt-2 font-bold">Expira em {format(new Date(goal.deadline), 'dd/MM/yy')}</p>
+                    </div>
+                  </div>
+
+                  <h3 className="text-2xl font-black mb-2">{goal.title}</h3>
+                  <div className="flex items-baseline gap-2 mb-6">
+                    <span className="text-3xl font-black">R$ {goal.currentAmount.toLocaleString('pt-BR')}</span>
+                    <span className="text-white/40 text-sm">/ R$ {goal.targetAmount.toLocaleString('pt-BR')}</span>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex justify-between text-xs font-black uppercase tracking-widest">
+                      <span className="text-white/40">Progresso</span>
+                      <span className={isCompleted ? 'text-emerald-400' : 'text-indigo-400'}>{progress.toFixed(0)}%</span>
+                    </div>
+                    <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden p-1">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${progress}%` }}
+                        className={`h-full rounded-full ${isCompleted ? 'bg-emerald-500' : 'bg-gradient-to-r from-indigo-600 to-blue-500'}`}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-8 flex gap-3">
+                    <button 
+                      onClick={() => handleUpdateGoalAmount(goal.id, goal.currentAmount, 100)}
+                      className="flex-1 bg-white/5 hover:bg-white/10 py-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2"
+                    >
+                      <Plus className="w-4 h-4" /> 100
+                    </button>
+                    <button 
+                      onClick={() => handleUpdateGoalAmount(goal.id, goal.currentAmount, 500)}
+                      className="flex-1 bg-white/5 hover:bg-white/10 py-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2"
+                    >
+                      <Plus className="w-4 h-4" /> 500
+                    </button>
+                    <button 
+                      onClick={() => deleteSavingsGoal(goal.id)}
+                      className="p-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition-all"
+                    >
+                      <XCircle className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  {isCompleted && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center gap-3"
+                    >
+                      <Sparkles className="w-5 h-5 text-emerald-400" />
+                      <p className="text-xs font-bold text-emerald-400">Objetivo Alcançado! Recompensa liberada.</p>
+                    </motion.div>
+                  )}
+                </motion.div>
+              );
+            })}
+
+            {savingsGoals.length === 0 && (
+              <div className="lg:col-span-3 py-20 text-center">
+                <div className="bg-white/5 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Target className="w-10 h-10 text-white/20" />
+                </div>
+                <h3 className="text-2xl font-black text-white/40">Nenhum projeto ativo</h3>
+                <p className="text-white/20 mt-2">Comece a economizar para o futuro do seu condomínio!</p>
+              </div>
+            )}
+          </div>
+
+          {/* Gamification Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+            <div className="bg-gradient-to-br from-indigo-600 to-blue-700 p-8 rounded-[40px] shadow-2xl shadow-indigo-500/20 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
+                <Trophy className="w-24 h-24" />
+              </div>
+              <p className="text-white/60 text-xs font-black uppercase tracking-widest mb-2">Total Economizado</p>
+              <h3 className="text-4xl font-black text-white">R$ {savingsGoals.reduce((acc, g) => acc + g.currentAmount, 0).toLocaleString('pt-BR')}</h3>
+              <div className="mt-6 flex items-center gap-2 text-white/80 text-sm font-bold">
+                <Sparkles className="w-4 h-4" /> 12 Conquistas Desbloqueadas
+              </div>
+            </div>
+
+            <div className="bg-white/5 p-8 rounded-[40px] border border-white/10 backdrop-blur-md">
+              <p className="text-white/40 text-xs font-black uppercase tracking-widest mb-2">Nível de Gestão</p>
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-400 font-black text-2xl">
+                  14
+                </div>
+                <div>
+                  <h3 className="text-xl font-black">Mestre das Finanças</h3>
+                  <div className="mt-2 h-1.5 w-32 bg-white/10 rounded-full overflow-hidden">
+                    <div className="h-full bg-amber-500 w-[75%]" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white/5 p-8 rounded-[40px] border border-white/10 backdrop-blur-md">
+              <p className="text-white/40 text-xs font-black uppercase tracking-widest mb-2">Próxima Recompensa</p>
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                  <Zap className="w-8 h-8" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black">Bônus de Eficiência</h3>
+                  <p className="text-xs text-white/40 mt-1">Faltam R$ 1.200 para liberar</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Add Cost Modal */}
@@ -722,6 +1049,100 @@ export default function AccountabilityDashboard() {
                 className="flex-1 py-4 bg-white text-[#004a7c] rounded-2xl font-bold hover:bg-white/90 transition-all shadow-xl"
               >
                 Salvar
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+      {/* Add Goal Modal */}
+      {isAddGoalModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-[#004a7c] border border-white/10 p-8 rounded-[40px] w-full max-w-md shadow-2xl relative overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+            
+            <h3 className="text-2xl font-black mb-6 relative z-10">Novo Projeto de Economia</h3>
+            
+            <div className="space-y-4 relative z-10">
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 block">Título do Projeto</label>
+                <input 
+                  type="text" 
+                  value={newGoal.title}
+                  onChange={(e) => setNewGoal({...newGoal, title: e.target.value})}
+                  placeholder="Ex: Reforma da Piscina"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:border-white/30 transition-all"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 block">Meta (R$)</label>
+                  <input 
+                    type="number" 
+                    value={newGoal.targetAmount}
+                    onChange={(e) => setNewGoal({...newGoal, targetAmount: e.target.value})}
+                    placeholder="0,00"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:border-white/30 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 block">Data Alvo</label>
+                  <input 
+                    type="date" 
+                    value={newGoal.deadline}
+                    onChange={(e) => setNewGoal({...newGoal, deadline: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:border-white/30 transition-all"
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 block">Categoria</label>
+                  <select 
+                    value={newGoal.category}
+                    onChange={(e) => setNewGoal({...newGoal, category: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:border-white/30 transition-all appearance-none"
+                  >
+                    <option value="Obra" className="bg-[#004a7c]">Obra</option>
+                    <option value="Equipamento" className="bg-[#004a7c]">Equipamento</option>
+                    <option value="Reserva" className="bg-[#004a7c]">Reserva</option>
+                    <option value="Lazer" className="bg-[#004a7c]">Lazer</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 block">Ícone</label>
+                  <select 
+                    value={newGoal.icon}
+                    onChange={(e) => setNewGoal({...newGoal, icon: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:border-white/30 transition-all appearance-none"
+                  >
+                    <option value="Rocket" className="bg-[#004a7c]">Foguete</option>
+                    <option value="Target" className="bg-[#004a7c]">Alvo</option>
+                    <option value="Trophy" className="bg-[#004a7c]">Troféu</option>
+                    <option value="Coins" className="bg-[#004a7c]">Moedas</option>
+                    <option value="Zap" className="bg-[#004a7c]">Raio</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-3 mt-8 relative z-10">
+              <button 
+                onClick={() => setIsAddGoalModalOpen(false)}
+                className="flex-1 py-4 bg-white/5 text-white rounded-2xl font-bold hover:bg-white/10 transition-all"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={handleAddGoal}
+                className="flex-1 py-4 bg-white text-[#004a7c] rounded-2xl font-bold hover:bg-white/90 transition-all shadow-xl"
+              >
+                Criar Projeto
               </button>
             </div>
           </motion.div>
