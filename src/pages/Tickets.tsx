@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useStore, TicketStatus } from '../store';
+import { useStore } from '../store';
+import { TicketStatus } from '../types';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Trash2, Eye, Edit, Hammer, Clock, ShieldAlert, Bell, Wrench, ExternalLink, Filter, Search, Tag } from 'lucide-react';
 import { BackButton } from '../components/BackButton';

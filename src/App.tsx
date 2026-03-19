@@ -80,7 +80,7 @@ function SupabaseStatus() {
 }
 
 function Layout({ children }: { children: React.ReactNode }) {
-  const { theme, toggleTheme, isAuthenticated, logout, notifications, markNotificationAsRead, clearNotifications } = useStore();
+  const { theme, toggleTheme, isAuthenticated, logout, notifications, markNotificationAsRead, clearNotifications, companyLogo } = useStore();
   const location = useLocation();
   const navigate = useNavigate();
   const [time, setTime] = useState(new Date());
@@ -100,6 +100,15 @@ function Layout({ children }: { children: React.ReactNode }) {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    const favicon = document.querySelector('link[rel="icon"]');
+    if (favicon && companyLogo) {
+      favicon.setAttribute('href', companyLogo);
+    } else if (favicon) {
+      favicon.setAttribute('href', 'https://api.iconify.design/lucide:building-2.svg?color=%23004a7c');
+    }
+  }, [companyLogo]);
 
   if (!isAuthenticated && location.pathname !== '/report') {
     return <Login />;

@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { useStore, Receipt } from '../store';
+import { useStore } from '../store';
+import { Receipt } from '../types';
 import { Download, Printer, FileText, FileCheck, Calendar, DollarSign, User, Trash2, Search } from 'lucide-react';
 import { BackButton } from '../components/BackButton';
 import { generatePdf } from '../utils/pdfGenerator';

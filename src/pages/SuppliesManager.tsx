@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useStore, SupplyItem, Supplier, SupplyQuotation } from '../store';
+import { useStore } from '../store';
+import { SupplyItem, Supplier, SupplyQuotation } from '../types';
 import { 
   Package, 
   Truck, 

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { useStore, Ticket } from '../store';
+import { useStore } from '../store';
+import { Ticket } from '../types';
 import { 
   MessageSquare, 
   Clock, 

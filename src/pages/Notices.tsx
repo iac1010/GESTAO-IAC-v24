@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useStore, Notice } from '../store';
+import { useStore } from '../store';
+import { Notice } from '../types';
 import { 
   Megaphone, 
   Plus, 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useStore, Visitor } from '../store';
+import { useStore } from '../store';
+import { Visitor } from '../types';
 import { 
   UserPlus, 
   Search, 

@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { useStore, Package, Client } from '../store';
+import { useStore } from '../store';
+import { Package, Client } from '../types';
 import { 
   Package as PackageIcon, 
   Plus, 

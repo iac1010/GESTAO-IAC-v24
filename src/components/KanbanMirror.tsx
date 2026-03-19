@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Ticket, TicketStatus } from '../store';
+import { Ticket, TicketStatus } from '../types';
 
 const COLUMNS: { id: TicketStatus; color: string }[] = [
   { id: 'APROVADO', color: 'text-blue-400' },

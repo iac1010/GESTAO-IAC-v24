@@ -1,5 +1,6 @@
 import React, { useState, useRef, useMemo } from 'react';
-import { useStore, QuoteItem, Quote } from '../store';
+import { useStore } from '../store';
+import { QuoteItem, Quote } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { Upload, Plus, Trash2, Save, FileSpreadsheet, CheckCircle, Clock, XCircle, FileText, Download, Eye, Send, Printer, Wrench } from 'lucide-react';
 import { BackButton } from '../components/BackButton';

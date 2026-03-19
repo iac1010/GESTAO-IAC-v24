@@ -1,5 +1,6 @@
 import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
-import { useStore, Payment, LegalAgreement, Client, SavingsGoal } from '../store';
+import { useStore } from '../store';
+import { Payment, LegalAgreement, Client, SavingsGoal } from '../types';
 import { BackButton } from '../components/BackButton';
 import { 
   TrendingUp, 

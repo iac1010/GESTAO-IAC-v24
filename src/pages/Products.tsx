@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { useStore, Product } from '../store';
+import { useStore } from '../store';
+import { Product } from '../types';
 import { Plus, Trash2, Edit, FileSpreadsheet, Search, Package, Tag, Info } from 'lucide-react';
 import { BackButton } from '../components/BackButton';
 import Papa from 'papaparse';

@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { useStore, Cost } from '../store';
+import { useStore } from '../store';
+import { Cost } from '../types';
 import { 
   DollarSign, TrendingUp, TrendingDown, Plus, Trash2, Wallet, 
   FileSpreadsheet, BarChart3, Lightbulb, ArrowUpRight, ArrowDownRight, 

@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
-import { useStore, ConsumptionReading } from '../store';
+import { useStore } from '../store';
+import { ConsumptionReading } from '../types';
 import { 
   Droplets, 
   Flame, 

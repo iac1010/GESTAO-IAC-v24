@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { SavingsGoal } from '../store';
+import { SavingsGoal } from '../types';
 import { Target, CheckCircle2 } from 'lucide-react';
 
 interface SavingsMirrorProps {

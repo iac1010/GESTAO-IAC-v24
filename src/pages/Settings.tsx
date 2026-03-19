@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { useStore, CompanyData } from '../store';
+import { useStore } from '../store';
+import { CompanyData } from '../types';
 import { Upload, Trash2, Image as ImageIcon, Save, Download, Database, FileUp, ChevronUp, ChevronDown, Layout as LayoutIcon, Settings as SettingsIcon, Eye, EyeOff } from 'lucide-react';
 import { BackButton } from '../components/BackButton';
 import { motion } from 'motion/react';

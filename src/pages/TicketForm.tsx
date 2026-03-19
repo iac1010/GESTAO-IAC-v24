@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { useStore, TicketType, TicketStatus } from '../store';
+import { useStore } from '../store';
+import { TicketType, TicketStatus } from '../types';
 import { Save, X, ClipboardList, Info, Wrench, ShieldAlert, Clock, CheckCircle2, AlertCircle, HelpCircle, Camera, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { BackButton } from '../components/BackButton';
 import { motion, AnimatePresence } from 'motion/react';

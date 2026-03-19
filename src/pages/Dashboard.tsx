@@ -1,5 +1,6 @@
 import { useStore } from '../store';
-import { Link } from 'react-router-dom';
+import { TicketStatus } from '../types';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Users, FileText, Plus, Hammer, 
   DollarSign, TrendingUp, Package, Database, 
@@ -13,6 +14,7 @@ import {
 import { KanbanMirror } from '../components/KanbanMirror';
 import { SavingsMirror } from '../components/SavingsMirror';
 import { CostsMirror } from '../components/CostsMirror';
+import { ReceiptsMirror } from '../components/ReceiptsMirror';
 import { WaterManagementMirror } from '../components/WaterManagementMirror';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import {
@@ -145,6 +147,7 @@ function WeatherTile() {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { 
     clients, tickets, products, receipts, costs, 
     appointments, companyLogo, restoreData, theme, 
@@ -584,7 +587,10 @@ export default function Dashboard() {
       id: 'accountability',
       type: 'wide',
       component: (
-        <Link to="/accountability" className="w-full h-full bg-gradient-to-br from-[#4e44ce] to-[#3b3399] hover:brightness-110 transition-all p-5 flex flex-col justify-between group relative overflow-hidden border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] active:scale-95">
+        <div 
+          onClick={() => navigate('/accountability')}
+          className="w-full h-full bg-gradient-to-br from-[#4e44ce] to-[#3b3399] hover:brightness-110 transition-all p-5 flex flex-col justify-between group relative overflow-hidden border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] active:scale-95 cursor-pointer"
+        >
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/20 pointer-events-none" />
           
           <div className="flex-1 flex items-center justify-center relative z-10">
@@ -607,11 +613,46 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-            <div className="flex flex-col items-end">
-              <p className="text-[8px] font-black uppercase text-white/50 mb-0.5">Inadimplência</p>
-              <div className="bg-black/20 px-3 py-1 rounded-full border border-white/10 backdrop-blur-md">
-                <span className="text-sm font-black drop-shadow-lg text-white">R$ {totalDelinquency.toLocaleString('pt-BR')}</span>
+            <div className="flex flex-col items-end gap-2">
+              <Link 
+                to="/receipts" 
+                className="flex items-center gap-1.5 bg-emerald-500/20 hover:bg-emerald-500/40 px-2 py-1 rounded-lg border border-emerald-500/30 transition-colors group/btn"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Plus className="w-3 h-3 text-emerald-400 group-hover/btn:rotate-90 transition-transform" />
+                <span className="text-[9px] font-black uppercase text-emerald-400">Adicionar Receita</span>
+              </Link>
+              <div className="flex flex-col items-end">
+                <p className="text-[8px] font-black uppercase text-white/50 mb-0.5">Inadimplência</p>
+                <div className="bg-black/20 px-3 py-1 rounded-full border border-white/10 backdrop-blur-md">
+                  <span className="text-sm font-black drop-shadow-lg text-white">R$ {totalDelinquency.toLocaleString('pt-BR')}</span>
+                </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 'received-receipts',
+      type: 'square',
+      component: (
+        <Link to="/receipts" className="w-full h-full bg-gradient-to-br from-[#f59e0b] to-[#d97706] hover:brightness-110 transition-all p-4 flex flex-col justify-between group relative overflow-hidden border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] active:scale-95">
+          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/20 pointer-events-none" />
+          
+          <div className="flex-1 flex items-center justify-center relative z-10">
+            <ReceiptsMirror 
+              receipts={receipts} 
+              className="!p-0 !bg-transparent !border-none !shadow-none !rounded-none w-full" 
+            />
+          </div>
+
+          <div className="flex justify-between items-end relative z-10 mt-2">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-white/20 rounded-lg border border-white/20 shadow-sm group-hover:scale-110 transition-transform duration-500">
+                <FileText className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] drop-shadow-md text-white">Receitas Recebidas</span>
             </div>
           </div>
         </Link>

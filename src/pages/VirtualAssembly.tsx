@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { useStore, Assembly, AssemblyOption } from '../store';
+import { useStore } from '../store';
+import { Assembly, AssemblyOption } from '../types';
 import { 
   Gavel, 
   ShieldCheck, 

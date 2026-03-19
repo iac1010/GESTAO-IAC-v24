@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useStore, TicketStatus, Ticket } from '../store';
+import { useStore } from '../store';
+import { TicketStatus, Ticket } from '../types';
 import { Link, useNavigate } from 'react-router-dom';
 import { Clock, Wrench, CheckCircle, AlertCircle, Calendar, User, Edit, Plus, MoreVertical, ExternalLink, X } from 'lucide-react';
 import { BackButton } from '../components/BackButton';

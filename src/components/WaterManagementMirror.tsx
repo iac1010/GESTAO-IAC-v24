@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { Droplets, Zap, Activity, Waves } from 'lucide-react';
-import { ConsumptionReading, CriticalEvent } from '../store';
+import { ConsumptionReading, CriticalEvent } from '../types';
 
 interface WaterManagementMirrorProps {
   readings: ConsumptionReading[];
