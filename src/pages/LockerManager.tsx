@@ -27,6 +27,7 @@ export default function LockerManager() {
   const navigate = useNavigate();
   const { packages, addPackage, pickupPackage, clients } = useStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [sendWhatsApp, setSendWhatsApp] = useState(true);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
@@ -54,9 +55,20 @@ export default function LockerManager() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    addPackage(newPkg);
+    const pkg = await addPackage(newPkg);
+    
+    if (sendWhatsApp) {
+      const resident = clients.find(c => c.id === pkg.clientId);
+      if (resident?.phone) {
+        const message = `Olá ${pkg.residentName}, uma encomenda de ${pkg.carrier} chegou para você (Apto ${pkg.apartment} ${pkg.tower}). Seu código de retirada é: ${pkg.qrCode}.`;
+        const encodedMessage = encodeURIComponent(message);
+        const whatsappUrl = `https://wa.me/${resident.phone.replace(/\D/g, '')}?text=${encodedMessage}`;
+        window.open(whatsappUrl, '_blank');
+      }
+    }
+
     setIsModalOpen(false);
     setNewPkg({
       residentName: '',
@@ -392,13 +404,29 @@ export default function LockerManager() {
                   />
                 </div>
 
-                <div className="flex gap-4 pt-4">
-                  <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-900 px-6 py-4 rounded-2xl font-bold transition-all">
-                    Cancelar
-                  </button>
-                  <button type="submit" className="flex-[2] bg-[#004a7c] hover:bg-[#003d66] text-white px-6 py-4 rounded-2xl font-bold transition-all shadow-xl active:scale-95">
-                    Confirmar
-                  </button>
+                <div className="space-y-4 pt-4">
+                  <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <input 
+                      type="checkbox"
+                      id="send-whatsapp"
+                      checked={sendWhatsApp}
+                      onChange={(e) => setSendWhatsApp(e.target.checked)}
+                      className="w-5 h-5 rounded border-slate-300 text-[#004a7c] focus:ring-[#004a7c]"
+                    />
+                    <label htmlFor="send-whatsapp" className="flex items-center gap-2 text-sm font-bold text-slate-700 cursor-pointer">
+                      <MessageCircle className="w-4 h-4 text-emerald-500" />
+                      Enviar notificação via WhatsApp
+                    </label>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-900 px-6 py-4 rounded-2xl font-bold transition-all">
+                      Cancelar
+                    </button>
+                    <button type="submit" className="flex-[2] bg-[#004a7c] hover:bg-[#003d66] text-white px-6 py-4 rounded-2xl font-bold transition-all shadow-xl active:scale-95">
+                      Confirmar
+                    </button>
+                  </div>
                 </div>
               </form>
             </motion.div>

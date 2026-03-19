@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from './lib/supabase';
 import { toast } from 'react-hot-toast';
@@ -439,7 +438,7 @@ interface AppState {
   updateNotice: (id: string, notice: Partial<Notice>) => void;
   deleteNotice: (id: string) => void;
 
-  addPackage: (pkg: Omit<Package, 'id' | 'receivedAt' | 'status' | 'qrCode'>) => void;
+  addPackage: (pkg: Omit<Package, 'id' | 'receivedAt' | 'status' | 'qrCode'>) => Promise<Package>;
   pickupPackage: (id: string) => void;
   
   addVisitor: (visitor: Omit<Visitor, 'id' | 'qrCode' | 'status'>) => void;
@@ -453,8 +452,7 @@ interface AppState {
 }
 
 export const useStore = create<AppState>()(
-  persist(
-    (set, get) => ({
+  (set, get) => ({
       clients: [],
       checklistItems: [],
       tickets: [],
@@ -521,7 +519,8 @@ export const useStore = create<AppState>()(
             supabase.from('critical_events').select('*'),
             supabase.from('digital_folder').select('*'),
             supabase.from('supply_quotations').select('*'),
-            supabase.from('company_settings').select('*').single()
+            supabase.from('company_settings').select('*').single(),
+            supabase.from('notifications').select('*')
           ]);
 
           const [
@@ -531,44 +530,20 @@ export const useStore = create<AppState>()(
             scheduledMaintenancesRes, consumptionReadingsRes, 
             assembliesRes, noticesRes, packagesRes, visitorsRes, 
             criticalEventsRes, digitalFolderRes, supplyQuotationsRes, 
-            companySettingsRes
+            companySettingsRes, notificationsRes
           ] = results;
 
           // Check for errors
           results.forEach((res, index) => {
-            if (res.error) {
+            if (res.error && res.error.code !== 'PGRST116') { // Ignore single() error if no settings yet
               console.error(`Erro ao carregar tabela (index ${index}):`, res.error);
-              if (res.error.code === '42P01') {
-                toast.error(`Tabela não encontrada no Supabase. Verifique se executou o script SQL.`);
-              }
             }
           });
 
-          const clientsData = clientsRes.data;
-          const ticketsData = ticketsRes.data;
-          const productsData = productsRes.data;
-          const quotesData = quotesRes.data;
-          const receiptsData = receiptsRes.data;
-          const costsData = costsRes.data;
-          const appointmentsData = appointmentsRes.data;
-          const checklistData = checklistRes.data;
-          const suppliersData = suppliersRes.data;
-          const supplyItemsData = supplyItemsRes.data;
-          const paymentsData = paymentsRes.data;
-          const legalAgreementsData = legalAgreementsRes.data;
-          const scheduledMaintenancesData = scheduledMaintenancesRes.data;
-          const consumptionReadingsData = consumptionReadingsRes.data;
-          const assembliesData = assembliesRes.data;
-          const noticesData = noticesRes.data;
-          const packagesData = packagesRes.data;
-          const visitorsData = visitorsRes.data;
-          const criticalEventsData = criticalEventsRes.data;
-          const companySettingsData = companySettingsRes.data;
-
           const newState: Partial<AppState> = {};
 
-          if (clientsData) {
-            newState.clients = clientsData.map(c => ({
+          if (clientsRes.data) {
+            newState.clients = clientsRes.data.map(c => ({
               id: c.id,
               name: c.name,
               document: c.document,
@@ -580,8 +555,8 @@ export const useStore = create<AppState>()(
             }));
           }
 
-          if (ticketsData) {
-            newState.tickets = ticketsData.map(t => ({
+          if (ticketsRes.data) {
+            newState.tickets = ticketsRes.data.map(t => ({
               id: t.id,
               osNumber: t.os_number,
               title: t.title,
@@ -608,8 +583,8 @@ export const useStore = create<AppState>()(
             }));
           }
 
-          if (productsData) {
-            newState.products = productsData.map(p => ({
+          if (productsRes.data) {
+            newState.products = productsRes.data.map(p => ({
               id: p.id,
               code: p.code,
               name: p.name,
@@ -619,8 +594,8 @@ export const useStore = create<AppState>()(
             }));
           }
 
-          if (quotesData) {
-            newState.quotes = quotesData.map(q => ({
+          if (quotesRes.data) {
+            newState.quotes = quotesRes.data.map(q => ({
               id: q.id,
               clientId: q.client_id,
               date: q.date,
@@ -630,8 +605,8 @@ export const useStore = create<AppState>()(
             }));
           }
 
-          if (receiptsData) {
-            newState.receipts = receiptsData.map(r => ({
+          if (receiptsRes.data) {
+            newState.receipts = receiptsRes.data.map(r => ({
               id: r.id,
               clientId: r.client_id,
               date: r.date,
@@ -640,8 +615,8 @@ export const useStore = create<AppState>()(
             }));
           }
 
-          if (costsData) {
-            newState.costs = costsData.map(c => ({
+          if (costsRes.data) {
+            newState.costs = costsRes.data.map(c => ({
               id: c.id,
               description: c.description,
               value: Number(c.value),
@@ -650,8 +625,8 @@ export const useStore = create<AppState>()(
             }));
           }
 
-          if (appointmentsData) {
-            newState.appointments = appointmentsData.map(a => ({
+          if (appointmentsRes.data) {
+            newState.appointments = appointmentsRes.data.map(a => ({
               id: a.id,
               title: a.title,
               start: a.start_time,
@@ -662,8 +637,8 @@ export const useStore = create<AppState>()(
             }));
           }
 
-          if (checklistData) {
-            newState.checklistItems = checklistData.map(i => ({
+          if (checklistRes.data) {
+            newState.checklistItems = checklistRes.data.map(i => ({
               id: i.id,
               task: i.task,
               category: i.category,
@@ -672,8 +647,8 @@ export const useStore = create<AppState>()(
             }));
           }
 
-          if (suppliersData) {
-            newState.suppliers = suppliersData.map(s => ({
+          if (suppliersRes.data) {
+            newState.suppliers = suppliersRes.data.map(s => ({
               id: s.id,
               name: s.name,
               contact: s.contact,
@@ -683,8 +658,8 @@ export const useStore = create<AppState>()(
             }));
           }
 
-          if (supplyItemsData) {
-            newState.supplyItems = supplyItemsData.map(i => ({
+          if (supplyItemsRes.data) {
+            newState.supplyItems = supplyItemsRes.data.map(i => ({
               id: i.id,
               name: i.name,
               category: i.category,
@@ -696,8 +671,8 @@ export const useStore = create<AppState>()(
             }));
           }
 
-          if (paymentsData) {
-            newState.payments = paymentsData.map(p => ({
+          if (paymentsRes.data) {
+            newState.payments = paymentsRes.data.map(p => ({
               id: p.id,
               clientId: p.client_id,
               amount: Number(p.amount),
@@ -708,8 +683,8 @@ export const useStore = create<AppState>()(
             }));
           }
 
-          if (legalAgreementsData) {
-            newState.legalAgreements = legalAgreementsData.map(a => ({
+          if (legalAgreementsRes.data) {
+            newState.legalAgreements = legalAgreementsRes.data.map(a => ({
               id: a.id,
               clientId: a.client_id,
               totalAmount: Number(a.total_amount),
@@ -721,8 +696,8 @@ export const useStore = create<AppState>()(
             }));
           }
 
-          if (scheduledMaintenancesData) {
-            newState.scheduledMaintenances = scheduledMaintenancesData.map(m => ({
+          if (scheduledMaintenancesRes.data) {
+            newState.scheduledMaintenances = scheduledMaintenancesRes.data.map(m => ({
               id: m.id,
               clientId: m.client_id,
               standardId: m.standard_id,
@@ -735,8 +710,8 @@ export const useStore = create<AppState>()(
             }));
           }
 
-          if (consumptionReadingsData) {
-            newState.consumptionReadings = consumptionReadingsData.map(r => ({
+          if (consumptionReadingsRes.data) {
+            newState.consumptionReadings = consumptionReadingsRes.data.map(r => ({
               id: r.id,
               clientId: r.client_id,
               type: r.type as any,
@@ -749,8 +724,8 @@ export const useStore = create<AppState>()(
             }));
           }
 
-          if (assembliesData) {
-            newState.assemblies = assembliesData.map(a => ({
+          if (assembliesRes.data) {
+            newState.assemblies = assembliesRes.data.map(a => ({
               id: a.id,
               title: a.title,
               description: a.description,
@@ -762,8 +737,8 @@ export const useStore = create<AppState>()(
             }));
           }
 
-          if (noticesData) {
-            newState.notices = noticesData.map(n => ({
+          if (noticesRes.data) {
+            newState.notices = noticesRes.data.map(n => ({
               id: n.id,
               title: n.title,
               content: n.content,
@@ -775,8 +750,8 @@ export const useStore = create<AppState>()(
             }));
           }
 
-          if (packagesData) {
-            newState.packages = packagesData.map(p => ({
+          if (packagesRes.data) {
+            newState.packages = packagesRes.data.map(p => ({
               id: p.id,
               residentName: p.resident_name,
               apartment: p.apartment,
@@ -792,8 +767,8 @@ export const useStore = create<AppState>()(
             }));
           }
 
-          if (visitorsData) {
-            newState.visitors = visitorsData.map(v => ({
+          if (visitorsRes.data) {
+            newState.visitors = visitorsRes.data.map(v => ({
               id: v.id,
               name: v.name,
               document: v.document,
@@ -806,8 +781,8 @@ export const useStore = create<AppState>()(
             }));
           }
 
-          if (criticalEventsData) {
-            newState.criticalEvents = criticalEventsData.map(e => ({
+          if (criticalEventsRes.data) {
+            newState.criticalEvents = criticalEventsRes.data.map(e => ({
               id: e.id,
               device: e.device,
               location: e.location,
@@ -843,7 +818,20 @@ export const useStore = create<AppState>()(
             }));
           }
 
-          if (companySettingsData) {
+          if (notificationsRes.data) {
+            newState.notifications = notificationsRes.data.map(n => ({
+              id: n.id,
+              title: n.title,
+              message: n.message,
+              type: n.type as any,
+              date: n.date,
+              read: n.read,
+              link: n.link
+            }));
+          }
+
+          if (companySettingsRes.data) {
+            const companySettingsData = companySettingsRes.data;
             newState.companySettingsId = companySettingsData.id;
             newState.companyData = {
               name: companySettingsData.name,
@@ -912,11 +900,21 @@ export const useStore = create<AppState>()(
           } catch (e) { console.error(e); }
         }
       },
-      toggleTileVisibility: (tileId) => set((state) => ({
-        hiddenTiles: state.hiddenTiles.includes(tileId)
+      toggleTileVisibility: async (tileId) => {
+        const state = get();
+        const newHiddenTiles = state.hiddenTiles.includes(tileId)
           ? state.hiddenTiles.filter(id => id !== tileId)
-          : [...state.hiddenTiles, tileId]
-      })),
+          : [...state.hiddenTiles, tileId];
+        
+        set({ hiddenTiles: newHiddenTiles });
+        
+        const id = get().companySettingsId;
+        if (id) {
+          try {
+            await supabase.from('company_settings').update({ hidden_tiles: newHiddenTiles }).eq('id', id);
+          } catch (e) { console.error(e); }
+        }
+      },
       toggleTheme: async () => {
         const newTheme = get().theme === 'light' ? 'dark' : 'light';
         set({ theme: newTheme });
@@ -1364,9 +1362,24 @@ export const useStore = create<AppState>()(
           await supabase.from('products').delete().eq('id', id);
         } catch (e) { console.error(e); }
       },
-      importProducts: (newProducts) => set((state) => ({ 
-        products: [...state.products, ...newProducts.map(p => ({ ...p, id: uuidv4() }))]
-      })),
+      importProducts: async (newProducts) => {
+        const productsWithIds = newProducts.map(p => ({ ...p, id: uuidv4() }));
+        set((state) => ({ 
+          products: [...state.products, ...productsWithIds]
+        }));
+
+        try {
+          const { error } = await supabase.from('products').insert(productsWithIds.map(p => ({
+            id: p.id,
+            code: p.code,
+            name: p.name,
+            description: p.description,
+            price: p.price,
+            unit: p.unit
+          })));
+          if (error) console.error('Erro Supabase importProducts:', error);
+        } catch (e) { console.error(e); }
+      },
 
       addSupplier: async (supplier) => {
         const id = uuidv4();
@@ -1745,16 +1758,38 @@ export const useStore = create<AppState>()(
         } catch (e) { console.error(e); }
       },
 
-      addNotification: (notif) => set((state) => ({
-        notifications: [
-          { ...notif, id: uuidv4(), date: new Date().toISOString(), read: false },
-          ...state.notifications
-        ].slice(0, 50) // Keep last 50
-      })),
-      markNotificationAsRead: (id) => set((state) => ({
-        notifications: state.notifications.map(n => n.id === id ? { ...n, read: true } : n)
-      })),
-      clearNotifications: () => set({ notifications: [] }),
+      addNotification: async (notif) => {
+        const id = uuidv4();
+        const newNotif = { ...notif, id, date: new Date().toISOString(), read: false };
+        set((state) => ({
+          notifications: [newNotif, ...state.notifications].slice(0, 50)
+        }));
+
+        try {
+          await supabase.from('notifications').insert([{
+            id,
+            title: notif.title,
+            message: notif.message,
+            type: notif.type,
+            date: newNotif.date,
+            read: false
+          }]);
+        } catch (e) { console.error(e); }
+      },
+      markNotificationAsRead: async (id) => {
+        set((state) => ({
+          notifications: state.notifications.map(n => n.id === id ? { ...n, read: true } : n)
+        }));
+        try {
+          await supabase.from('notifications').update({ read: true }).eq('id', id);
+        } catch (e) { console.error(e); }
+      },
+      clearNotifications: async () => {
+        set({ notifications: [] });
+        try {
+          await supabase.from('notifications').delete().neq('id', ''); // Delete all
+        } catch (e) { console.error(e); }
+      },
 
       addConsumptionReading: async (reading) => {
         const id = uuidv4();
@@ -2018,9 +2053,11 @@ export const useStore = create<AppState>()(
 
         get().addNotification({
           title: 'Nova Encomenda!',
-          message: `Pacote de ${pkg.carrier} para ${pkg.residentName} (${pkg.apartment} ${pkg.tower}). QR Code enviado via WhatsApp.`,
+          message: `Pacote de ${pkg.carrier} para ${pkg.residentName} (${pkg.apartment} ${pkg.tower}).`,
           type: 'SUCCESS'
         });
+
+        return newPkg;
       },
 
       pickupPackage: async (id) => {
@@ -2155,7 +2192,15 @@ export const useStore = create<AppState>()(
         }
       },
 
-      setEnergyData: (energyData) => set({ energyData }),
+      setEnergyData: async (energyData) => {
+        set({ energyData });
+        const id = get().companySettingsId;
+        if (id) {
+          try {
+            await supabase.from('company_settings').update({ energy_data: energyData }).eq('id', id);
+          } catch (e) { console.error(e); }
+        }
+      },
 
       restoreData: (data) => set((state) => ({
         ...state,
@@ -2176,9 +2221,5 @@ export const useStore = create<AppState>()(
         menuOrder: data.menuOrder || state.menuOrder,
         hiddenTiles: data.hiddenTiles || state.hiddenTiles,
       })),
-    }),
-    {
-      name: 'manutencao-storage',
-    }
-  )
+    })
 );
