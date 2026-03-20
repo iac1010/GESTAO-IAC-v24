@@ -5,7 +5,7 @@ import { Calendar as BigCalendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale/pt-BR';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { Plus, Calendar as CalendarIcon, Clock, AlignLeft, X, Info, CalendarDays, MapPin, User } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, Clock, AlignLeft, X, Info, CalendarDays, MapPin, User, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BackButton } from '../components/BackButton';
 import { v4 as uuidv4 } from 'uuid';
 import { motion, AnimatePresence } from 'motion/react';
@@ -24,12 +24,119 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
+const CalendarEvent = ({ event }: any) => {
+  const isTicket = event.resource.type === 'TICKET';
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex items-center gap-1.5 truncate">
+        <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${isTicket ? 'bg-white' : 'bg-white/60'}`} />
+        <span className="truncate">{event.title}</span>
+      </div>
+      {!event.allDay && (
+        <span className="text-[0.65rem] opacity-70 font-medium ml-3">
+          {format(event.start, 'HH:mm')}
+        </span>
+      )}
+    </div>
+  );
+};
+
+const MonthDateHeader = ({ label, date, onDrillDown }: any) => {
+  const isToday = format(date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+  return (
+    <div className="flex justify-center p-2">
+      <button 
+        type="button"
+        onClick={onDrillDown}
+        className={`
+          w-10 h-10 flex items-center justify-center rounded-2xl text-sm font-black transition-all
+          ${isToday 
+            ? 'bg-zinc-900 text-white shadow-lg scale-110' 
+            : 'hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900'}
+        `}
+      >
+        {label}
+      </button>
+    </div>
+  );
+};
+
+const CustomToolbar = (toolbar: any) => {
+  const goToBack = () => {
+    toolbar.onNavigate('PREV');
+  };
+  const goToNext = () => {
+    toolbar.onNavigate('NEXT');
+  };
+  const goToToday = () => {
+    toolbar.onNavigate('TODAY');
+  };
+
+  const toggleView = (view: string) => {
+    toolbar.onView(view);
+  };
+
+  return (
+    <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-12">
+      <div className="flex items-center gap-4 bg-zinc-100 p-1.5 rounded-2xl">
+        <button
+          type="button"
+          onClick={goToBack}
+          className="p-3 hover:bg-white hover:shadow-sm rounded-xl transition-all text-zinc-500 hover:text-zinc-900"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <button
+          type="button"
+          onClick={goToToday}
+          className="px-6 py-2.5 bg-white shadow-sm rounded-xl text-sm font-black text-zinc-900 uppercase tracking-widest transition-all active:scale-95"
+        >
+          Hoje
+        </button>
+        <button
+          type="button"
+          onClick={goToNext}
+          className="p-3 hover:bg-white hover:shadow-sm rounded-xl transition-all text-zinc-500 hover:text-zinc-900"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+      </div>
+
+      <div className="text-3xl font-light text-zinc-900 lowercase tracking-tight">
+        {toolbar.label}
+      </div>
+
+      <div className="flex items-center gap-2 bg-zinc-100 p-1.5 rounded-2xl">
+        {['month', 'week', 'day', 'agenda'].map((view) => (
+          <button
+            key={view}
+            type="button"
+            onClick={() => toggleView(view)}
+            className={`
+              px-6 py-2.5 rounded-xl text-[0.7rem] font-black uppercase tracking-[0.15em] transition-all
+              ${toolbar.view === view 
+                ? 'bg-zinc-900 text-white shadow-lg' 
+                : 'text-zinc-400 hover:text-zinc-600 hover:bg-white/50'}
+            `}
+          >
+            {view === 'month' ? 'Mês' : 
+             view === 'week' ? 'Semana' : 
+             view === 'day' ? 'Dia' : 'Agenda'}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export default function Calendar() {
   const navigate = useNavigate();
   const { appointments, tickets, clients, addAppointment, deleteAppointment } = useStore();
   
   const [isAdding, setIsAdding] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [view, setView] = useState<any>('month');
+  const [date, setDate] = useState(new Date());
   
   const [title, setTitle] = useState('');
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0] + 'T09:00');
@@ -62,7 +169,7 @@ export default function Calendar() {
   }));
 
   const allEvents = [...ticketEvents, ...appointmentEvents];
-
+  
   const handleSelectSlot = ({ start, end }: { start: Date, end: Date }) => {
     setStartDate(format(start, "yyyy-MM-dd'T'HH:mm"));
     setEndDate(format(end, "yyyy-MM-dd'T'HH:mm"));
@@ -173,49 +280,81 @@ export default function Calendar() {
       >
         <style>{`
           .rbc-calendar { font-family: 'Inter', system-ui, sans-serif; border: none; color: #18181b; }
-          .rbc-month-view, .rbc-time-view, .rbc-header { border-color: #e4e4e7 !important; }
-          .rbc-day-bg + .rbc-day-bg, .rbc-month-row + .rbc-month-row { border-color: #f4f4f5 !important; }
-          .rbc-time-content > * + * > * { border-color: #f4f4f5 !important; }
-          .rbc-timeslot-group { border-color: #f4f4f5 !important; min-height: 80px; }
-          .rbc-day-slot .rbc-time-slot { border-color: #f4f4f5 !important; }
-          .rbc-off-range-bg { background-color: #fafafa !important; }
-          .rbc-today { background-color: #eff6ff !important; }
-          .rbc-header { 
-            padding: 20px 8px !important; 
-            font-size: 0.7rem !important; 
-            font-weight: 900 !important; 
-            color: #71717a !important;
-            background: transparent !important;
-            border-bottom: 1px solid #e4e4e7 !important;
-            text-transform: uppercase;
-            letter-spacing: 0.2em;
+          .rbc-month-view, .rbc-time-view, .rbc-header { border: none !important; }
+          .rbc-month-view { 
+            background: white !important; 
+            border-radius: 40px !important; 
+            padding: 20px !important;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02) !important;
           }
-          .rbc-button-link { font-weight: 700 !important; color: inherit !important; }
-          .rbc-toolbar { margin-bottom: 40px !important; }
-          .rbc-toolbar button { 
-            border: 1px solid #e4e4e7 !important; 
-            border-radius: 16px !important; 
-            padding: 12px 24px !important; 
-            font-weight: 700 !important; 
-            font-size: 0.9rem !important; 
-            color: #3f3f46 !important;
+          .rbc-month-row { 
+            border: none !important; 
+            margin-bottom: 10px !important;
+          }
+          .rbc-day-bg { 
+            border: 1px solid #f4f4f5 !important; 
+            border-radius: 24px !important;
+            margin: 4px !important;
+            transition: all 0.3s ease !important;
+            background: #fafafa !important;
+          }
+          .rbc-day-bg:hover { 
             background: white !important;
-            transition: all 0.3s !important;
-            margin-right: 10px !important;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
+            border-color: #e4e4e7 !important;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.04) !important;
+            transform: translateY(-2px);
           }
-          .rbc-toolbar button:hover { background-color: #f4f4f5 !important; transform: translateY(-1px); }
-          .rbc-toolbar button.rbc-active { background-color: #18181b !important; color: white !important; border-color: #09090b !important; box-shadow: 0 0 20px rgba(24, 24, 27, 0.3); }
-          .rbc-event { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; }
-          .rbc-event:hover { transform: translateY(-4px) scale(1.03) !important; z-index: 50 !important; }
-          .rbc-show-more { font-weight: 800 !important; font-size: 0.75rem !important; color: #18181b !important; opacity: 0.8; padding: 4px 8px; }
-          .rbc-time-view { border-radius: 32px; overflow: hidden; border: 1px solid #e4e4e7; background: white; }
-          .rbc-month-view { border-radius: 32px; overflow: hidden; border: 1px solid #e4e4e7; background: white; }
-          .rbc-time-header-content { border-left: 1px solid #e4e4e7 !important; }
-          .rbc-time-content { border-top: 1px solid #e4e4e7 !important; }
-          .rbc-label { color: #71717a !important; font-size: 0.75rem !important; font-weight: 700 !important; }
-          .rbc-current-time-indicator { background-color: #ef4444 !important; height: 2px !important; }
+          .rbc-today { background-color: #f0f9ff !important; border-color: #bae6fd !important; }
+          
+          .rbc-header { 
+            padding: 15px 8px !important; 
+            font-size: 0.75rem !important; 
+            font-weight: 900 !important; 
+            color: #a1a1aa !important;
+            background: transparent !important;
+            border: none !important;
+            text-transform: uppercase;
+            letter-spacing: 0.25em;
+          }
+          
+          .rbc-month-header { border: none !important; margin-bottom: 10px; }
+
+          .rbc-toolbar { display: none !important; }
+          
+          .rbc-event { 
+            margin: 2px 6px !important;
+            padding: 0 !important;
+          }
+          
+          .rbc-event-content { padding: 0 !important; }
+          
+          .rbc-show-more { 
+            font-weight: 900 !important; 
+            font-size: 0.65rem !important; 
+            color: #2563eb !important; 
+            background: #eff6ff !important;
+            padding: 4px 10px !important;
+            border-radius: 10px !important;
+            margin-left: 8px !important;
+            text-transform: uppercase;
+          }
+
+          .rbc-time-view { 
+            border-radius: 40px; 
+            overflow: hidden; 
+            border: none; 
+            background: white; 
+            padding: 20px;
+          }
+          
+          .rbc-time-header { border-bottom: 1px solid #f4f4f5 !important; }
+          .rbc-time-content { border: none !important; }
+          .rbc-timeslot-group { border-bottom: 1px solid #fafafa !important; min-height: 100px; }
+          .rbc-time-slot { border: none !important; }
+          .rbc-day-slot { border-left: 1px solid #f4f4f5 !important; }
+          
+          .rbc-off-range-bg { background-color: #fafafa !important; opacity: 0.5; }
+          .rbc-label { color: #a1a1aa !important; font-size: 0.7rem !important; font-weight: 800 !important; text-transform: uppercase; letter-spacing: 0.1em; }
         `}</style>
         <BigCalendar
           localizer={localizer}
@@ -224,7 +363,10 @@ export default function Calendar() {
           endAccessor="end"
           style={{ height: '100%' }}
           culture="pt-BR"
-          defaultView="week"
+          view={view}
+          onView={(v) => setView(v)}
+          date={date}
+          onNavigate={(d) => setDate(d)}
           messages={{
             next: "Próximo",
             previous: "Anterior",
@@ -242,6 +384,13 @@ export default function Calendar() {
           onSelectSlot={handleSelectSlot}
           onSelectEvent={handleSelectEvent}
           eventPropGetter={eventStyleGetter}
+          components={{
+            event: CalendarEvent,
+            toolbar: CustomToolbar,
+            month: {
+              dateHeader: MonthDateHeader,
+            },
+          }}
         />
       </motion.div>
 

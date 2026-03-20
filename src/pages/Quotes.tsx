@@ -618,181 +618,157 @@ export default function Quotes() {
         <div style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
           <div 
             ref={printRef}
-            className="bg-white w-[794px] text-zinc-900 font-sans relative border-l-8 border-red-600"
-            style={{ padding: '0' }}
+            className="bg-white w-[800px] text-zinc-900 font-sans"
+            style={{ padding: '40px', margin: '0' }}
           >
-            {/* Main Content Container: Continuous Flow Design */}
-            <div className="p-20 flex flex-col bg-white w-full">
-              
-              {/* Header: Minimalist & Linear */}
-              <div className="flex justify-between items-end pb-16 border-b-4 border-zinc-900 mb-20 break-inside-avoid">
-                <div className="space-y-8">
-                  {companyLogo ? (
-                    <img src={companyLogo} alt="Logo" className="h-16 w-auto max-w-[240px] object-contain" />
-                  ) : (
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-zinc-900 flex items-center justify-center rounded-xl shadow-lg">
-                        <Wrench className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-3xl font-black tracking-tighter leading-none">IA COMPANY</span>
-                        <span className="text-3xl font-light tracking-widest text-red-600 leading-none">TEC</span>
-                      </div>
+            {/* Header */}
+            <div className="border-b-4 border-zinc-900 flex justify-between items-end pb-8 mb-8">
+              <div className="space-y-4">
+                {companyLogo ? (
+                  <img 
+                    src={companyLogo} 
+                    alt="Logo" 
+                    style={{ height: '70px', width: 'auto', maxWidth: '300px', objectFit: 'contain' }} 
+                  />
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 bg-zinc-900 flex items-center justify-center rounded-xl">
+                      <Wrench className="w-8 h-8 text-white" />
                     </div>
-                  )}
-                  
-                  <div className="flex gap-8 text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">
-                    <div className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-600"></span>
-                      <span>{companyData?.name || 'IA COMPANY TEC'}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-600"></span>
-                      <span>CNPJ {companyData?.document || '---'}</span>
+                    <div className="flex flex-col">
+                      <span className="text-3xl font-black tracking-tighter leading-none">IA COMPANY</span>
+                      <span className="text-3xl font-light tracking-widest text-red-600 leading-none uppercase">TEC</span>
                     </div>
                   </div>
-                </div>
-
-                <div className="text-right space-y-2">
-                  <h1 className="text-6xl font-black tracking-tighter uppercase leading-none text-zinc-900">PROPOSTA</h1>
-                  <div className="flex items-center justify-end gap-4 text-[10px] font-black uppercase tracking-widest text-zinc-400">
-                    <span>REF: #{quoteToPrint.id.substring(0, 8).toUpperCase()}</span>
-                    <span className="w-1 h-1 rounded-full bg-zinc-200"></span>
-                    <span>{new Date(quoteToPrint.date).toLocaleDateString('pt-BR')}</span>
-                  </div>
+                )}
+                <div className="text-[12px] font-bold uppercase tracking-widest text-zinc-500">
+                  <p>{companyData?.name || 'IA COMPANY TEC'}</p>
+                  <p>CNPJ: {companyData?.document || '---'}</p>
                 </div>
               </div>
+              <div className="text-right">
+                <h1 className="text-6xl font-black tracking-tighter uppercase leading-none text-zinc-900 mb-2">PROPOSTA</h1>
+                <div className="text-[12px] font-bold uppercase tracking-widest text-zinc-400">
+                  <span>REF: #{quoteToPrint.id.substring(0, 8).toUpperCase()}</span>
+                  <span className="mx-3">|</span>
+                  <span>{new Date(quoteToPrint.date).toLocaleDateString('pt-BR')}</span>
+                </div>
+              </div>
+            </div>
 
-              {/* Client Section: Clean Linear Block */}
-              <div className="mb-20 break-inside-avoid">
-                <div className="grid grid-cols-12 gap-12">
-                  <div className="col-span-8">
-                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-red-600 mb-4">Cliente / Destinatário</p>
-                    <h2 className="text-4xl font-black text-zinc-900 tracking-tighter mb-6">
-                      {clients.find(c => c.id === quoteToPrint.clientId)?.name}
-                    </h2>
-                    <div className="flex flex-wrap gap-x-12 gap-y-4 text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
-                      <p>DOC: {clients.find(c => c.id === quoteToPrint.clientId)?.document || '---'}</p>
-                      <p>TEL: {clients.find(c => c.id === quoteToPrint.clientId)?.phone}</p>
-                      <p className="w-full">END: {clients.find(c => c.id === quoteToPrint.clientId)?.address}</p>
-                    </div>
+            {/* Client Info */}
+            <div className="mb-10">
+              <div className="bg-zinc-50 p-10 rounded-3xl border border-zinc-100 grid grid-cols-12 gap-8">
+                <div className="col-span-8">
+                  <p className="text-[10px] font-black uppercase tracking-[0.4em] text-red-600 mb-3">Cliente / Destinatário</p>
+                  <h2 className="text-4xl font-black text-zinc-900 tracking-tight mb-6">
+                    {clients.find(c => c.id === quoteToPrint.clientId)?.name}
+                  </h2>
+                  <div className="grid grid-cols-1 gap-3 text-[12px] font-bold text-zinc-500 uppercase tracking-wider">
+                    <p><span className="text-zinc-300 mr-2">DOC:</span> {clients.find(c => c.id === quoteToPrint.clientId)?.document || '---'}</p>
+                    <p><span className="text-zinc-300 mr-2">TEL:</span> {clients.find(c => c.id === quoteToPrint.clientId)?.phone}</p>
+                    <p><span className="text-zinc-300 mr-2">END:</span> {clients.find(c => c.id === quoteToPrint.clientId)?.address}</p>
                   </div>
-                  <div className="col-span-4 flex flex-col justify-end items-end text-right border-l-2 border-zinc-50 pl-12">
-                    <div className="space-y-4">
-                      <div>
-                        <p className="text-[9px] font-black uppercase text-zinc-300 tracking-widest mb-1">Validade</p>
-                        <p className="text-sm font-black text-zinc-900">15 DIAS</p>
-                      </div>
-                      <div>
-                        <p className="text-[9px] font-black uppercase text-zinc-300 tracking-widest mb-1">Pagamento</p>
-                        <p className="text-sm font-black text-zinc-900">FATURADO</p>
-                      </div>
+                </div>
+                <div className="col-span-4 flex flex-col justify-center text-right border-l-2 border-zinc-200 pl-10">
+                  <div className="space-y-6">
+                    <div>
+                      <p className="text-[10px] font-black uppercase text-zinc-300 tracking-widest mb-1">Validade</p>
+                      <p className="text-lg font-black text-zinc-900">15 DIAS</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase text-zinc-300 tracking-widest mb-1">Pagamento</p>
+                      <p className="text-lg font-black text-zinc-900">FATURADO</p>
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Items Table: Brutalist & Continuous */}
-              <div className="mb-20">
-                <table className="w-full">
-                  <thead>
-                    <tr className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 border-b-2 border-zinc-900">
-                      <th className="py-4 text-left">Item / Descrição</th>
-                      <th className="py-4 text-center w-20">Qtd</th>
-                      <th className="py-4 text-right w-32">Unitário</th>
-                      <th className="py-4 text-right w-32">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-100">
-                    {quoteToPrint.items.map((item, idx) => (
-                      <tr key={item.id} className="break-inside-avoid">
-                        <td className="py-8 pr-8">
-                          <div className="flex gap-6">
-                            <span className="text-[11px] font-black text-zinc-200 mt-1">{(idx + 1).toString().padStart(2, '0')}</span>
-                            <p className="text-base font-black text-zinc-900 leading-tight tracking-tight">{item.description}</p>
-                          </div>
-                        </td>
-                        <td className="py-8 text-center">
-                          <span className="text-base font-mono font-black text-zinc-400">{item.quantity}</span>
-                        </td>
-                        <td className="py-8 text-right">
-                          <span className="text-base font-mono font-bold text-zinc-400">
-                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.unitPrice)}
-                          </span>
-                        </td>
-                        <td className="py-8 text-right">
-                          <span className="text-lg font-black text-zinc-900 font-mono tracking-tighter">
-                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.total)}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Totals: High Impact Linear Block */}
-              <div className="mt-auto break-inside-avoid no-break">
-                <div className="border-t-4 border-zinc-900 pt-12">
-                  <div className="flex justify-between items-start mb-20">
-                    <div className="max-w-md">
-                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-4">Notas e Condições</p>
-                      <p className="text-[11px] text-zinc-500 font-bold leading-relaxed uppercase tracking-wider">
-                        Este orçamento contempla apenas os itens listados acima. 
-                        Qualquer serviço extra será cobrado separadamente mediante aprovação prévia.
-                      </p>
-                    </div>
-                    <div className="text-right space-y-4">
-                      <div className="space-y-1">
-                        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400">Subtotal</p>
-                        <p className="text-2xl font-bold text-zinc-400">
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(quoteToPrint.totalValue)}
-                        </p>
-                      </div>
-                      <div className="space-y-1 pt-4 border-t border-zinc-100">
-                        <p className="text-[12px] font-black uppercase tracking-[0.6em] text-red-600">Investimento Total</p>
-                        <p className="text-6xl font-black tracking-tighter text-zinc-900">
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(quoteToPrint.totalValue)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Signatures: Clean Linear Grid */}
-                  <div className="grid grid-cols-2 gap-24 pt-20 border-t border-zinc-50 break-inside-avoid no-break">
-                    <div className="space-y-4">
-                      <div className="flex flex-col items-center">
-                        <div className="h-16 flex items-end justify-center w-full relative">
-                          {companySignature && (
-                            <img src={companySignature} alt="Assinatura" className="max-h-full max-w-full object-contain mb-[-8px] relative z-10" />
-                          )}
+            {/* Items Table */}
+            <div className="mb-10">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-[11px] font-black uppercase tracking-widest text-zinc-400 border-b-2 border-zinc-900">
+                    <th className="py-5 text-left">Item / Descrição</th>
+                    <th className="py-5 text-center w-24">Qtd</th>
+                    <th className="py-5 text-right w-36">Unitário</th>
+                    <th className="py-5 text-right w-36">Total</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {quoteToPrint.items.map((item, idx) => (
+                    <tr key={item.id} className="break-inside-avoid">
+                      <td className="py-8 pr-8">
+                        <div className="flex gap-5">
+                          <span className="text-[12px] font-black text-zinc-200 mt-1">{(idx + 1).toString().padStart(2, '0')}</span>
+                          <p className="text-lg font-bold text-zinc-800 leading-tight tracking-tight">{item.description}</p>
                         </div>
-                        <div className="h-px bg-zinc-200 w-full"></div>
-                      </div>
-                      <div className="space-y-1 text-center">
-                        <p className="text-[11px] font-black uppercase tracking-widest text-zinc-900">Síndico</p>
-                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">Assinatura</p>
-                      </div>
-                    </div>
-                    <div className="space-y-4">
-                      <div className="flex flex-col items-center">
-                        <div className="h-16 w-full"></div>
-                        <div className="h-px bg-zinc-200 w-full"></div>
-                      </div>
-                      <div className="space-y-1 text-center">
-                        <p className="text-[11px] font-black uppercase tracking-widest text-zinc-900">Cliente</p>
-                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">Assinatura e Data</p>
-                      </div>
-                    </div>
+                      </td>
+                      <td className="py-8 text-center text-lg font-mono text-zinc-500">{item.quantity}</td>
+                      <td className="py-8 text-right text-lg font-mono text-zinc-500">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.unitPrice)}
+                      </td>
+                      <td className="py-8 text-right text-xl font-black text-zinc-900 font-mono tracking-tighter">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.total)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Totals and Signatures */}
+            <div className="break-inside-avoid no-break">
+              <div className="border-t-4 border-zinc-900 pt-10 flex justify-between items-start mb-12">
+                <div className="max-w-sm">
+                  <p className="text-[11px] font-black uppercase tracking-widest text-zinc-400 mb-3">Notas e Condições</p>
+                  <p className="text-[12px] text-zinc-500 leading-relaxed italic">
+                    Este orçamento contempla apenas os itens listados acima. Qualquer serviço extra será cobrado separadamente mediante aprovação prévia.
+                  </p>
+                </div>
+                <div className="text-right space-y-3">
+                  <div className="flex justify-end gap-10 text-sm font-bold text-zinc-400">
+                    <span>SUBTOTAL</span>
+                    <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(quoteToPrint.totalValue)}</span>
+                  </div>
+                  <div className="flex justify-end gap-10 pt-6 border-t-2 border-zinc-100">
+                    <span className="text-[12px] font-black uppercase tracking-[0.4em] text-red-600 self-center">Investimento Total</span>
+                    <span className="text-5xl font-black tracking-tighter text-zinc-900">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(quoteToPrint.totalValue)}
+                    </span>
                   </div>
                 </div>
+              </div>
 
-                {/* Footer: Minimalist Bar */}
-                <div className="mt-24 pt-12 border-t border-zinc-50 flex justify-between items-center text-[10px] font-black uppercase tracking-[0.4em] text-zinc-300">
-                  <span>IA COMPANY TEC Cloud System</span>
-                  <span>Autenticidade Garantida</span>
+              <div className="grid grid-cols-2 gap-24 mt-16">
+                <div className="text-center">
+                  <div className="h-20 flex items-end justify-center mb-3">
+                    {companySignature && (
+                      <img 
+                        src={companySignature} 
+                        alt="Assinatura" 
+                        style={{ maxHeight: '80px', maxWidth: '100%', objectFit: 'contain' }} 
+                      />
+                    )}
+                  </div>
+                  <div className="border-t-2 border-zinc-200 pt-3">
+                    <p className="text-[12px] font-black uppercase tracking-widest text-zinc-900">{companyData?.name || 'IA COMPANY TEC'}</p>
+                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Responsável Técnico</p>
+                  </div>
                 </div>
-                <div className="h-20"></div> {/* Bottom Padding for Page Breaks */}
+                <div className="text-center">
+                  <div className="h-20 mb-3"></div>
+                  <div className="border-t-2 border-zinc-200 pt-3">
+                    <p className="text-[12px] font-black uppercase tracking-widest text-zinc-900">Cliente</p>
+                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Assinatura e Data</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-16 pt-10 border-t border-zinc-50 flex justify-between items-center text-[10px] font-bold uppercase tracking-[0.5em] text-zinc-300">
+                <span>IA COMPANY TEC Cloud System</span>
+                <span>Autenticidade Garantida</span>
               </div>
             </div>
           </div>

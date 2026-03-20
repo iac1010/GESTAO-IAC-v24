@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { HashRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Settings as SettingsIcon, Moon, Sun, User, LogOut, Database, Bell } from 'lucide-react';
 import { useStore } from './store';
-import { supabase } from './lib/supabase';
+import { supabase, isSupabaseConfigured, isLocalSupabase } from './lib/supabase';
 
 import { Toaster } from 'react-hot-toast';
 
@@ -38,16 +38,18 @@ import DocumentFactory from './pages/DocumentFactory';
 import SystemPresentation from './pages/SystemPresentation';
 
 function SupabaseStatus() {
-  const [status, setStatus] = useState<'checking' | 'connected' | 'error' | 'missing_env'>('checking');
+  const [status, setStatus] = useState<'checking' | 'connected' | 'error' | 'missing_env' | 'local'>('checking');
   const [errMsg, setErrMsg] = useState<string>('');
 
   useEffect(() => {
     async function checkConnection() {
-      const url = import.meta.env.VITE_SUPABASE_URL;
-      const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-      if (!url || !key || url === 'YOUR_SUPABASE_PROJECT_URL') {
+      if (!isSupabaseConfigured) {
         setStatus('missing_env');
+        return;
+      }
+
+      if (isLocalSupabase) {
+        setStatus('local');
         return;
       }
 
@@ -73,7 +75,8 @@ function SupabaseStatus() {
       <Database className="w-3 h-3 flex-shrink-0" />
       {status === 'checking' && <span className="text-yellow-400 truncate">Verificando Supabase...</span>}
       {status === 'connected' && <span className="text-green-400 truncate">Supabase Conectado</span>}
-      {status === 'missing_env' && <span className="text-orange-400 truncate" title="Variáveis VITE_SUPABASE_URL faltando">Faltam Variáveis no Vercel</span>}
+      {status === 'missing_env' && <span className="text-orange-400 truncate" title="Variáveis VITE_SUPABASE_URL faltando">Configuração Faltando (Secrets)</span>}
+      {status === 'local' && <span className="text-orange-400 truncate" title="URL aponta para localhost">Localhost não suportado no Preview</span>}
       {status === 'error' && <span className="text-red-400 truncate" title={errMsg}>Erro: {errMsg || 'Verifique as chaves'}</span>}
     </div>
   );

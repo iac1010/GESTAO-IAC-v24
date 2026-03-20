@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
-import { supabase } from './lib/supabase';
+import { supabase, isSupabaseConfigured, isLocalSupabase } from './lib/supabase';
 import { toast } from 'react-hot-toast';
 import { NBR5674_STANDARDS } from './constants/maintenance';
 import { 
@@ -57,6 +57,14 @@ export const useStore = create<AppState>()(
       isLoading: false,
       
       fetchInitialData: async () => {
+        if (!isSupabaseConfigured) {
+          console.warn('Supabase não configurado. Usando dados locais.');
+          set({ isLoading: false });
+          return;
+        }
+        if (isLocalSupabase) {
+          toast.error('Você está usando uma URL do Supabase apontando para localhost. Isso não funcionará no ambiente de preview do AI Studio.');
+        }
         set({ isLoading: true });
         try {
           // Fetch all data in parallel
@@ -873,6 +881,16 @@ export const useStore = create<AppState>()(
         const newAppointment = { ...appointment, id };
         set((state) => ({ appointments: [...state.appointments, newAppointment] }));
 
+        if (!isSupabaseConfigured) {
+          toast.error('Supabase não configurado. O compromisso foi salvo apenas localmente.');
+          return;
+        }
+
+        if (isLocalSupabase) {
+          toast.error('URL do Supabase aponta para localhost. O compromisso foi salvo apenas localmente.');
+          return;
+        }
+
         try {
           const { error } = await supabase.from('appointments').insert([{
             id,
@@ -885,13 +903,17 @@ export const useStore = create<AppState>()(
           }]);
           if (error) {
             console.error('Erro Supabase addAppointment:', error);
-            toast.error(`Erro ao salvar compromisso: ${error.message}`);
+            if (error.message === 'Failed to fetch') {
+              toast.error('Erro de conexão com o Supabase. Verifique se a URL do projeto está correta e se o projeto não está pausado.');
+            } else {
+              toast.error(`Erro ao salvar compromisso: ${error.message}`);
+            }
           } else {
             toast.success('Compromisso salvo no Supabase!');
           }
         } catch (e: any) { 
           console.error(e);
-          toast.error('Erro de conexão ao salvar compromisso.');
+          toast.error('Erro de conexão ao salvar compromisso. Verifique sua internet e as configurações do Supabase.');
         }
       },
       updateAppointment: async (id, updatedAppointment) => {

@@ -22,11 +22,11 @@ export async function generatePdf(element: HTMLElement, fileName: string, format
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     const opt: any = {
-      margin: [10, 10, 10, 10], // Margens de 10mm (topo, esquerda, baixo, direita)
+      margin: 0, // Margens controladas pelo CSS do elemento
       filename: fileName,
-      image: { type: 'jpeg', quality: 0.98 },
+      image: { type: 'jpeg', quality: 1 },
       html2canvas: { 
-        scale: 2, 
+        scale: 3, // Aumentado para maior nitidez
         useCORS: true, 
         letterRendering: true,
         backgroundColor: '#ffffff',
@@ -36,11 +36,12 @@ export async function generatePdf(element: HTMLElement, fileName: string, format
         unit: 'mm', 
         format: format, 
         orientation: 'portrait',
-        compress: true
+        compress: true,
+        precision: 16
       },
       pagebreak: { 
         mode: ['avoid-all', 'css', 'legacy'],
-        avoid: ['.break-inside-avoid', '.page-break-inside-avoid', 'tr', 'blockquote', 'button', '.no-break']
+        avoid: ['.break-inside-avoid', 'tr', '.no-break']
       }
     };
 
