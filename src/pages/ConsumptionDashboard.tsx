@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { useStore } from '../store';
 import { ConsumptionReading } from '../types';
 import { 
@@ -14,7 +14,11 @@ import {
   Search,
   Filter,
   Download,
-  BarChart3
+  BarChart3,
+  Upload,
+  FileSpreadsheet,
+  X,
+  FileDown
 } from 'lucide-react';
 import { BackButton } from '../components/BackButton';
 import { 
@@ -30,9 +34,12 @@ import {
   Legend
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
-import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval, addDays, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Modal } from '../components/Modal';
+import Papa from 'papaparse';
+import { toast } from 'react-hot-toast';
 
 export default function ConsumptionDashboard() {
   const navigate = useNavigate();
@@ -40,6 +47,17 @@ export default function ConsumptionDashboard() {
   const [isSimulating, setIsSimulating] = useState(false);
   const [selectedClient, setSelectedClient] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<'all' | 'WATER' | 'GAS'>('all');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [newReading, setNewReading] = useState({
+    clientId: '',
+    type: 'WATER' as 'WATER' | 'GAS',
+    previousValue: 0,
+    currentValue: 0,
+    date: new Date().toISOString().split('T')[0],
+    unit: 'm³'
+  });
 
   // Mock data if empty
   const displayReadings = useMemo(() => {
@@ -71,6 +89,7 @@ export default function ConsumptionDashboard() {
 
   const chartData = useMemo(() => {
     const data: any[] = [];
+    // Show last 6 months including current
     for (let i = 5; i >= 0; i--) {
       const date = subMonths(new Date(), i);
       const monthStr = format(date, 'MMM/yy', { locale: ptBR });
@@ -89,6 +108,151 @@ export default function ConsumptionDashboard() {
     }
     return data;
   }, [displayReadings]);
+
+  const handleAddReading = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newReading.clientId) {
+      toast.error('Selecione um cliente');
+      return;
+    }
+
+    const consumption = newReading.currentValue - newReading.previousValue;
+    if (consumption < 0) {
+      toast.error('Leitura atual não pode ser menor que a anterior');
+      return;
+    }
+
+    addConsumptionReading({
+      ...newReading,
+      consumption,
+      billed: false
+    });
+
+    toast.success('Leitura adicionada com sucesso');
+    setIsAddModalOpen(false);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        const data = results.data as any[];
+        let count = 0;
+
+        data.forEach(row => {
+          // Expected columns: clientId, type, previousValue, currentValue, date, unit
+          if (row.clientId && row.currentValue && row.date) {
+            const prev = parseFloat(row.previousValue) || 0;
+            const curr = parseFloat(row.currentValue);
+            addConsumptionReading({
+              clientId: row.clientId,
+              type: (row.type?.toUpperCase() === 'GAS' ? 'GAS' : 'WATER'),
+              previousValue: prev,
+              currentValue: curr,
+              consumption: curr - prev,
+              date: row.date,
+              unit: row.unit || 'm³',
+              billed: false
+            });
+            count++;
+          }
+        });
+
+        toast.success(`${count} leituras importadas com sucesso`);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      },
+      error: (error) => {
+        toast.error('Erro ao processar arquivo: ' + error.message);
+      }
+    });
+  };
+
+  const downloadCSVSample = () => {
+    const headers = ['clientId', 'type', 'previousValue', 'currentValue', 'date', 'unit'];
+    const sampleData = [
+      [clients[0]?.id || 'ID_DO_CLIENTE', 'WATER', '14623', '14716', '2026-01-01', 'm³'],
+      [clients[0]?.id || 'ID_DO_CLIENTE', 'WATER', '14716', '14716', '2026-01-02', 'm³']
+    ];
+    
+    const csvContent = [headers, ...sampleData].map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", "modelo_consumo.csv");
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const import2026Data = () => {
+    const clientId = clients[0]?.id || 'predio-geral';
+    
+    const janCons = [93, 0, 84, 37, 36, 47, 48, 38, 49, 54, 39, 49, 61, 39, 47, 0, 82, 0, 67, 0, 0, 121, 46, 24, 38, 39, 51, 47, 0, 85, 81];
+    const febCons = [50, 0, 56, 43, 48, 38, 56, 0, 0, 119, 47, 49, 38, 55, 38, 30, 47, 0, 81, 53, 47, 26, 52, 44, 50, 42, 38, 44];
+    const marCons = [119, 0, 49, 48, 45, 11, 80, 47, 0, 75, 0, 96, 63, 0];
+
+    let currentVal = 14623; // From OCR Jan 1st previous was 14623
+    let count = 0;
+
+    // Jan
+    janCons.forEach((cons, i) => {
+      const prev = currentVal;
+      currentVal += cons;
+      addConsumptionReading({
+        clientId,
+        type: 'WATER',
+        previousValue: prev,
+        currentValue: currentVal,
+        consumption: cons,
+        date: `2026-01-${String(i + 1).padStart(2, '0')}`,
+        unit: 'm³',
+        billed: true
+      });
+      count++;
+    });
+
+    // Feb
+    febCons.forEach((cons, i) => {
+      const prev = currentVal;
+      currentVal += cons;
+      addConsumptionReading({
+        clientId,
+        type: 'WATER',
+        previousValue: prev,
+        currentValue: currentVal,
+        consumption: cons,
+        date: `2026-02-${String(i + 1).padStart(2, '0')}`,
+        unit: 'm³',
+        billed: true
+      });
+      count++;
+    });
+
+    // Mar
+    marCons.forEach((cons, i) => {
+      const prev = currentVal;
+      currentVal += cons;
+      addConsumptionReading({
+        clientId,
+        type: 'WATER',
+        previousValue: prev,
+        currentValue: currentVal,
+        consumption: cons,
+        date: `2026-03-${String(i + 1).padStart(2, '0')}`,
+        unit: 'm³',
+        billed: false
+      });
+      count++;
+    });
+
+    toast.success(`${count} registros de 2026 importados`);
+  };
 
   const simulateIoTReadings = () => {
     setIsSimulating(true);
@@ -144,7 +308,37 @@ export default function ConsumptionDashboard() {
           </div>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
+          <button 
+            onClick={import2026Data}
+            className="bg-indigo-500/20 border border-indigo-500/30 text-indigo-200 px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-indigo-500/30 transition-all backdrop-blur-md"
+          >
+            <FileSpreadsheet className="w-5 h-5" />
+            Importar 2026
+          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={downloadCSVSample}
+              className="bg-white/5 border border-white/10 text-white/60 p-3 rounded-xl hover:bg-white/10 transition-all backdrop-blur-md"
+              title="Baixar Modelo CSV"
+            >
+              <FileDown className="w-5 h-5" />
+            </button>
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="bg-white/10 border border-white/10 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-white/20 transition-all backdrop-blur-md"
+            >
+              <Upload className="w-5 h-5" />
+              Upload Planilha
+            </button>
+          </div>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileUpload} 
+            accept=".csv" 
+            className="hidden" 
+          />
           <button 
             onClick={simulateIoTReadings}
             disabled={isSimulating}
@@ -153,7 +347,10 @@ export default function ConsumptionDashboard() {
             <RefreshCw className={`w-5 h-5 ${isSimulating ? 'animate-spin' : ''}`} /> 
             Sincronizar
           </button>
-          <button className="bg-white text-[#004a7c] px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-white/90 transition-all shadow-xl">
+          <button 
+            onClick={() => setIsAddModalOpen(true)}
+            className="bg-white text-[#004a7c] px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-white/90 transition-all shadow-xl"
+          >
             <Plus className="w-5 h-5" /> Nova Leitura
           </button>
         </div>
@@ -326,7 +523,7 @@ export default function ConsumptionDashboard() {
                 const client = clients.find(c => c.id === reading.clientId);
                 return (
                   <tr key={reading.id} className="hover:bg-white/5 transition-colors">
-                    <td className="px-8 py-6 text-sm font-bold text-white/60">{format(new Date(reading.date), 'dd/MM/yyyy')}</td>
+                    <td className="px-8 py-6 text-sm font-bold text-white/60">{format(parseISO(reading.date), 'dd/MM/yyyy')}</td>
                     <td className="px-8 py-6">
                       <p className="font-bold text-white">{client?.name}</p>
                       <p className="text-xs text-white/40">{client?.address}</p>
@@ -362,6 +559,109 @@ export default function ConsumptionDashboard() {
           </table>
         </div>
       </div>
+
+      {/* Add Reading Modal */}
+      <Modal 
+        isOpen={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)}
+        title="Nova Leitura de Consumo"
+        glass={true}
+        maxWidth="2xl"
+      >
+        <form onSubmit={handleAddReading} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-white/60">Cliente/Unidade</label>
+              <select 
+                value={newReading.clientId}
+                onChange={(e) => setNewReading({...newReading, clientId: e.target.value})}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-white/30 transition-all text-white"
+                required
+              >
+                <option value="">Selecione...</option>
+                {clients.map(c => <option key={c.id} value={c.id} className="bg-[#004a7c]">{c.name}</option>)}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-white/60">Tipo</label>
+              <select 
+                value={newReading.type}
+                onChange={(e) => setNewReading({...newReading, type: e.target.value as any})}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-white/30 transition-all text-white"
+              >
+                <option value="WATER" className="bg-[#004a7c]">Água</option>
+                <option value="GAS" className="bg-[#004a7c]">Gás</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-white/60">Leitura Anterior (m³)</label>
+              <input 
+                type="number" 
+                step="0.01"
+                value={newReading.previousValue}
+                onChange={(e) => setNewReading({...newReading, previousValue: parseFloat(e.target.value)})}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-white/30 transition-all text-white"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-white/60">Leitura Atual (m³)</label>
+              <input 
+                type="number" 
+                step="0.01"
+                value={newReading.currentValue}
+                onChange={(e) => setNewReading({...newReading, currentValue: parseFloat(e.target.value)})}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-white/30 transition-all text-white"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-white/60">Data da Leitura</label>
+              <input 
+                type="date" 
+                value={newReading.date}
+                onChange={(e) => setNewReading({...newReading, date: e.target.value})}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-white/30 transition-all text-white"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-white/60">Unidade</label>
+              <input 
+                type="text" 
+                value={newReading.unit}
+                onChange={(e) => setNewReading({...newReading, unit: e.target.value})}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-white/30 transition-all text-white"
+              />
+            </div>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-bold text-indigo-200">Consumo Calculado:</span>
+              <span className="text-2xl font-black text-white">
+                {(newReading.currentValue - newReading.previousValue).toFixed(2)} {newReading.unit}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex gap-4 pt-4">
+            <button 
+              type="button"
+              onClick={() => setIsAddModalOpen(false)}
+              className="flex-1 px-6 py-3 rounded-xl font-bold border border-white/10 hover:bg-white/5 transition-all"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit"
+              className="flex-1 px-6 py-3 rounded-xl font-bold bg-white text-[#004a7c] hover:bg-white/90 transition-all shadow-xl"
+            >
+              Salvar Leitura
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

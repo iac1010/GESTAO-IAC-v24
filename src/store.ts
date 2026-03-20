@@ -1866,11 +1866,11 @@ export const useStore = create<AppState>()(
       },
 
       addSavingsGoal: async (goal) => {
-        const id = crypto.randomUUID();
+        const id = uuidv4();
         const newGoal = { ...goal, id };
         set((state) => ({ savingsGoals: [...state.savingsGoals, newGoal] }));
         try {
-          const { error } = await supabase.from('savings_goals').insert({
+          const { error } = await supabase.from('savings_goals').insert([{
             id,
             title: goal.title,
             target_amount: goal.targetAmount,
@@ -1879,7 +1879,7 @@ export const useStore = create<AppState>()(
             category: goal.category,
             icon: goal.icon,
             status: goal.status
-          });
+          }]);
           if (error) throw error;
           toast.success('Meta de economia adicionada!');
         } catch (e) {

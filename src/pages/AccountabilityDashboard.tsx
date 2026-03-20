@@ -80,6 +80,8 @@ export default function AccountabilityDashboard() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAddCostModalOpen, setIsAddCostModalOpen] = useState(false);
   const [isAddGoalModalOpen, setIsAddGoalModalOpen] = useState(false);
+  const [isEditGoalModalOpen, setIsEditGoalModalOpen] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<SavingsGoal | null>(null);
   const [newCost, setNewCost] = useState({
     description: '',
     value: '',
@@ -230,30 +232,60 @@ export default function AccountabilityDashboard() {
   const handleAddGoal = async () => {
     if (!newGoal.title || !newGoal.targetAmount) return;
     
-    await addSavingsGoal({
-      title: newGoal.title,
-      targetAmount: parseFloat(newGoal.targetAmount),
-      currentAmount: parseFloat(newGoal.currentAmount),
-      deadline: newGoal.deadline,
-      category: newGoal.category,
-      icon: newGoal.icon,
-      status: 'IN_PROGRESS'
-    });
+    try {
+      await addSavingsGoal({
+        title: newGoal.title,
+        targetAmount: parseFloat(newGoal.targetAmount),
+        currentAmount: parseFloat(newGoal.currentAmount),
+        deadline: newGoal.deadline,
+        category: newGoal.category,
+        icon: newGoal.icon,
+        status: 'IN_PROGRESS'
+      });
 
-    setIsAddGoalModalOpen(false);
-    setNewGoal({
-      title: '',
-      targetAmount: '',
-      currentAmount: '0',
-      deadline: format(new Date(), 'yyyy-MM-dd'),
-      category: 'Obra',
-      icon: 'Rocket'
-    });
+      setIsAddGoalModalOpen(false);
+      setNewGoal({
+        title: '',
+        targetAmount: '',
+        currentAmount: '0',
+        deadline: format(new Date(), 'yyyy-MM-dd'),
+        category: 'Obra',
+        icon: 'Rocket'
+      });
+    } catch (error) {
+      console.error('Erro ao adicionar meta:', error);
+    }
+  };
+
+  const handleEditGoal = (goal: SavingsGoal) => {
+    setEditingGoal(goal);
+    setIsEditGoalModalOpen(true);
+  };
+
+  const handleUpdateGoal = async () => {
+    if (!editingGoal) return;
+    
+    try {
+      await updateSavingsGoal(editingGoal.id, {
+        title: editingGoal.title,
+        targetAmount: editingGoal.targetAmount,
+        deadline: editingGoal.deadline,
+        category: editingGoal.category,
+        icon: editingGoal.icon,
+        status: editingGoal.currentAmount >= editingGoal.targetAmount ? 'COMPLETED' : 'IN_PROGRESS'
+      });
+      setIsEditGoalModalOpen(false);
+      setEditingGoal(null);
+    } catch (error) {
+      console.error('Erro ao atualizar meta:', error);
+    }
   };
 
   const handleUpdateGoalAmount = async (id: string, currentAmount: number, increment: number) => {
     const newAmount = Math.max(0, currentAmount + increment);
-    await updateSavingsGoal(id, { currentAmount: newAmount });
+    const goal = savingsGoals.find(g => g.id === id);
+    const status = goal && newAmount >= goal.targetAmount ? 'COMPLETED' : 'IN_PROGRESS';
+    await updateSavingsGoal(id, { currentAmount: newAmount, status });
   };
 
   const getGoalIcon = (iconName: string) => {
@@ -900,8 +932,16 @@ export default function AccountabilityDashboard() {
                       <Plus className="w-4 h-4" /> 500
                     </button>
                     <button 
+                      onClick={() => handleEditGoal(goal)}
+                      className="p-3 bg-white/5 hover:bg-white/10 text-white/60 rounded-xl transition-all"
+                      title="Editar Meta"
+                    >
+                      <FileText className="w-5 h-5" />
+                    </button>
+                    <button 
                       onClick={() => deleteSavingsGoal(goal.id)}
                       className="p-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition-all"
+                      title="Excluir Meta"
                     >
                       <XCircle className="w-5 h-5" />
                     </button>
@@ -1144,6 +1184,111 @@ export default function AccountabilityDashboard() {
                 className="flex-1 py-4 bg-white text-[#004a7c] rounded-2xl font-bold hover:bg-white/90 transition-all shadow-xl"
               >
                 Criar Projeto
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+      {/* Edit Goal Modal */}
+      {isEditGoalModalOpen && editingGoal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-[#004a7c] border border-white/10 p-8 rounded-[40px] w-full max-w-md shadow-2xl relative overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+            
+            <h3 className="text-2xl font-black mb-6 relative z-10">Editar Projeto</h3>
+            
+            <div className="space-y-4 relative z-10">
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 block">Título do Projeto</label>
+                <input 
+                  type="text" 
+                  value={editingGoal.title}
+                  onChange={(e) => setEditingGoal({...editingGoal, title: e.target.value})}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:border-white/30 transition-all"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 block">Meta (R$)</label>
+                  <input 
+                    type="number" 
+                    value={editingGoal.targetAmount}
+                    onChange={(e) => setEditingGoal({...editingGoal, targetAmount: parseFloat(e.target.value)})}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:border-white/30 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 block">Data Alvo</label>
+                  <input 
+                    type="date" 
+                    value={editingGoal.deadline}
+                    onChange={(e) => setEditingGoal({...editingGoal, deadline: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:border-white/30 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 block">Valor Atual (R$)</label>
+                <input 
+                  type="number" 
+                  value={editingGoal.currentAmount}
+                  onChange={(e) => setEditingGoal({...editingGoal, currentAmount: parseFloat(e.target.value)})}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:border-white/30 transition-all"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 block">Categoria</label>
+                  <select 
+                    value={editingGoal.category}
+                    onChange={(e) => setEditingGoal({...editingGoal, category: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:border-white/30 transition-all appearance-none"
+                  >
+                    <option value="Obra" className="bg-[#004a7c]">Obra</option>
+                    <option value="Equipamento" className="bg-[#004a7c]">Equipamento</option>
+                    <option value="Reserva" className="bg-[#004a7c]">Reserva</option>
+                    <option value="Lazer" className="bg-[#004a7c]">Lazer</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2 block">Ícone</label>
+                  <select 
+                    value={editingGoal.icon}
+                    onChange={(e) => setEditingGoal({...editingGoal, icon: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:border-white/30 transition-all appearance-none"
+                  >
+                    <option value="Rocket" className="bg-[#004a7c]">Foguete</option>
+                    <option value="Target" className="bg-[#004a7c]">Alvo</option>
+                    <option value="Trophy" className="bg-[#004a7c]">Troféu</option>
+                    <option value="Coins" className="bg-[#004a7c]">Moedas</option>
+                    <option value="Zap" className="bg-[#004a7c]">Raio</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-3 mt-8 relative z-10">
+              <button 
+                onClick={() => {
+                  setIsEditGoalModalOpen(false);
+                  setEditingGoal(null);
+                }}
+                className="flex-1 py-4 bg-white/5 text-white rounded-2xl font-bold hover:bg-white/10 transition-all"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={handleUpdateGoal}
+                className="flex-1 py-4 bg-white text-[#004a7c] rounded-2xl font-bold hover:bg-white/90 transition-all shadow-xl"
+              >
+                Salvar Alterações
               </button>
             </div>
           </motion.div>
