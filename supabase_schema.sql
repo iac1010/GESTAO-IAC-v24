@@ -321,6 +321,19 @@ INSERT INTO company_settings (name, theme, menu_order)
 SELECT 'IA COMPANY TEC', 'light', ARRAY['dashboard', 'accountability', 'consumption', 'clients', 'products', 'supplies', 'tickets', 'kanban', 'quotes', 'receipts', 'financial', 'calendar', 'settings']
 WHERE NOT EXISTS (SELECT 1 FROM company_settings);
 
+-- 23. Tabela de Modelos de Documentos (Document Factory)
+CREATE TABLE IF NOT EXISTS document_templates (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title TEXT NOT NULL,
+  category TEXT NOT NULL,
+  description TEXT,
+  legal_basis TEXT,
+  content TEXT NOT NULL,
+  file_url TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- ==========================================
 -- TRIGGERS PARA ATUALIZAR O UPDATED_AT
 -- ==========================================

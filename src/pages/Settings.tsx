@@ -166,7 +166,7 @@ export default function Settings() {
     locker: 'Locker Digital',
     monitoring: 'Automações IoT',
     settings: 'Ajustes',
-    'document-factory': 'Fábrica de Documentos',
+    'document-factory': 'Central de Documentos',
     'system-presentation': 'Apresentação',
     'demo-data': 'Backup / Demo',
   };

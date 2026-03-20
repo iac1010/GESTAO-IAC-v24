@@ -16,6 +16,7 @@ import { SavingsMirror } from '../components/SavingsMirror';
 import { CostsMirror } from '../components/CostsMirror';
 import { ReceiptsMirror } from '../components/ReceiptsMirror';
 import { WaterManagementMirror } from '../components/WaterManagementMirror';
+import { MonitoringMirror } from '../components/MonitoringMirror';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   DndContext, 
@@ -706,31 +707,35 @@ export default function Dashboard() {
       id: 'monitoring',
       type: 'wide',
       component: (
-        <Link to="/monitoring" className={`w-full h-full p-4 flex flex-col justify-between  group relative overflow-hidden border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] active:scale-95 transition-all ${
+        <Link to="/monitoring" className={`w-full h-full p-4 flex flex-col justify-between group relative overflow-hidden border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] active:scale-95 transition-all ${
           criticalEvents.some(e => e.status === 'CRITICAL')
             ? 'bg-gradient-to-br from-red-600 to-red-800 animate-pulse-subtle'
             : 'bg-gradient-to-br from-[#10b981] to-[#059669]'
         }`}>
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/20 pointer-events-none" />
-          <div className="flex items-start gap-4 h-full relative z-10">
-            <div className="p-3 bg-white/20 rounded-2xl border border-white/20 shadow-sm group-hover:scale-110 transition-transform duration-500">
-              <Zap className="w-10 h-10 text-white" />
-            </div>
-            <div className="overflow-hidden flex-1">
-              <p className="text-[10px] font-black uppercase text-white/70 mb-1 tracking-[0.2em]">Automações IoT</p>
-              <div className="space-y-1">
-                <p className="font-black text-xl truncate text-white leading-tight">Controle Remoto</p>
-                <div className="flex items-center gap-2 text-white/80">
-                  {criticalEvents.some(e => e.status === 'CRITICAL') ? (
-                    <span className="text-sm font-bold text-white animate-pulse">ALERTA DE SISTEMA</span>
-                  ) : (
-                    <span className="text-sm font-bold">Sistemas Conectados</span>
-                  )}
+          
+          <div className="flex-1 flex items-center justify-center relative z-10 overflow-hidden">
+            <MonitoringMirror 
+              showLabel={false} 
+              className="!p-0 !bg-transparent !border-none !shadow-none !rounded-none w-full max-w-[260px]" 
+            />
+          </div>
+
+          <div className="flex justify-between items-end relative z-10 mt-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/20 rounded-xl border border-white/20 shadow-sm group-hover:scale-110 transition-transform duration-500">
+                <Zap className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] drop-shadow-md">Controle Remoto</span>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-[8px] font-bold text-white/50 uppercase tracking-widest">Mirror Live</span>
                 </div>
               </div>
             </div>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/70">Acionamento Rápido</span>
           </div>
-          <span className="text-[11px] font-black uppercase tracking-[0.2em] relative z-10 text-white/70">Acionamentos & Automação</span>
         </Link>
       )
     },
@@ -758,9 +763,9 @@ export default function Dashboard() {
               <FileText className="w-10 h-10 text-white" />
             </div>
             <div className="overflow-hidden flex-1">
-              <p className="text-[10px] font-black uppercase text-white/70 mb-1 tracking-[0.2em]">Fábrica de Documentos</p>
+              <p className="text-[10px] font-black uppercase text-white/70 mb-1 tracking-[0.2em]">Central de Documentos</p>
               <div className="space-y-1">
-                <p className="font-black text-xl truncate text-white leading-tight">Modelos Jurídicos</p>
+                <p className="font-black text-xl truncate text-white leading-tight">Central de Documentos</p>
                 <div className="flex items-center gap-2 text-white/80">
                   <ShieldCheck className="w-4 h-4 text-emerald-400" />
                   <p className="text-sm font-bold text-white">Atas, Editais e Contratos</p>

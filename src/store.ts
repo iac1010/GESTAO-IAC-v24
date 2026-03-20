@@ -8,7 +8,7 @@ import {
   SavingsGoal, Appointment, Ticket, CompanyData, Product, Supplier, 
   SupplyItem, SupplyQuotation, Payment, LegalAgreement, ScheduledMaintenance, 
   AppNotification, ConsumptionReading, Assembly, Notice, Package, Visitor, 
-  CriticalEvent, EnergyRecord, AppState, DigitalFolderItem, Vote 
+  CriticalEvent, EnergyRecord, AppState, DigitalFolderItem, Vote, DocumentTemplate 
 } from './types';
 
 export const useStore = create<AppState>()(
@@ -54,6 +54,7 @@ export const useStore = create<AppState>()(
       hiddenTiles: [],
       tileSizes: {},
       tileOrder: null,
+      documentTemplates: [],
       isLoading: false,
       
       fetchInitialData: async () => {
@@ -92,7 +93,8 @@ export const useStore = create<AppState>()(
             supabase.from('supply_quotations').select('*'),
             supabase.from('company_settings').select('*').single(),
             supabase.from('notifications').select('*'),
-            supabase.from('savings_goals').select('*')
+            supabase.from('savings_goals').select('*'),
+            supabase.from('document_templates').select('*')
           ]);
 
           const [
@@ -102,7 +104,7 @@ export const useStore = create<AppState>()(
             scheduledMaintenancesRes, consumptionReadingsRes, 
             assembliesRes, noticesRes, packagesRes, visitorsRes, 
             criticalEventsRes, digitalFolderRes, supplyQuotationsRes, 
-            companySettingsRes, notificationsRes, savingsGoalsRes
+            companySettingsRes, notificationsRes, savingsGoalsRes, documentTemplatesRes
           ] = results;
 
           // Check for errors
@@ -412,6 +414,18 @@ export const useStore = create<AppState>()(
               category: g.category,
               icon: g.icon,
               status: g.status as any
+            }));
+          }
+
+          if (documentTemplatesRes.data) {
+            newState.documentTemplates = documentTemplatesRes.data.map(t => ({
+              id: t.id,
+              title: t.title,
+              category: t.category,
+              description: t.description,
+              legalBasis: t.legal_basis,
+              content: t.content,
+              fileUrl: t.file_url
             }));
           }
 
@@ -1881,6 +1895,75 @@ export const useStore = create<AppState>()(
         } catch (e) {
           console.error(e);
           toast.error('Erro ao remover meta');
+        }
+      },
+
+      addDocumentTemplate: async (template) => {
+        const id = uuidv4();
+        const newTemplate = { ...template, id, fileUrl: template.fileUrl || '' };
+        
+        set((state) => ({
+          documentTemplates: [...state.documentTemplates, newTemplate],
+        }));
+
+        if (isSupabaseConfigured) {
+          const { error } = await supabase.from('document_templates').insert([{
+            id,
+            title: template.title,
+            category: template.category,
+            description: template.description,
+            legal_basis: template.legalBasis,
+            content: template.content,
+            file_url: template.fileUrl
+          }]);
+          if (error) {
+            toast.error('Erro ao salvar documento');
+            console.error(error);
+          } else {
+            toast.success('Documento salvo com sucesso!');
+          }
+        }
+      },
+
+      updateDocumentTemplate: async (id, template) => {
+        set((state) => ({
+          documentTemplates: state.documentTemplates.map((t) =>
+            t.id === id ? { ...t, ...template } : t
+          ),
+        }));
+
+        if (isSupabaseConfigured) {
+          const updateData: any = {};
+          if (template.title) updateData.title = template.title;
+          if (template.category) updateData.category = template.category;
+          if (template.description) updateData.description = template.description;
+          if (template.legalBasis) updateData.legal_basis = template.legalBasis;
+          if (template.content) updateData.content = template.content;
+          if (template.fileUrl !== undefined) updateData.file_url = template.fileUrl;
+
+          const { error } = await supabase.from('document_templates').update(updateData).eq('id', id);
+          if (error) {
+            toast.error('Erro ao atualizar documento');
+            console.error(error);
+          } else {
+            toast.success('Documento atualizado com sucesso!');
+          }
+        }
+      },
+
+      deleteDocumentTemplate: async (id) => {
+        set((state) => ({
+          documentTemplates: state.documentTemplates.filter((t) => t.id !== id),
+        }));
+
+        if (isSupabaseConfigured) {
+          const { error } = await supabase.from('document_templates').delete().eq('id', id);
+          if (error) {
+            toast.error('Erro ao excluir documento');
+            console.error(error);
+          } else {
+            toast.success('Documento excluído com sucesso!');
+          }
         }
       },
 

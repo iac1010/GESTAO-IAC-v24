@@ -76,13 +76,13 @@ const SLIDES = [
   },
   {
     id: 'legal',
-    title: 'Fábrica de Documentos',
+    title: 'Central de Documentos',
     subtitle: 'Base Jurídica e Governança',
-    content: 'Acesse uma biblioteca completa de modelos jurídicos revisados. Gere atas, editais, notificações e contratos em segundos, garantindo conformidade total com o Código Civil.',
+    content: 'Acesse uma biblioteca completa de documentos revisados. Gere atas, editais, notificações e contratos em segundos, garantindo conformidade total com o Código Civil.',
     icon: <FileSignature className="w-12 h-12 text-indigo-500" />,
     image: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=2070',
     benefits: [
-      'Modelos prontos e editáveis',
+      'Documentos prontos e editáveis',
       'Base jurídica atualizada 2024',
       'Padronização de processos legais'
     ]

@@ -321,6 +321,16 @@ export type EnergyRecord = {
   actualCost: number;
 };
 
+export type DocumentTemplate = {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  legalBasis: string;
+  content: string;
+  fileUrl?: string;
+};
+
 export interface AppState {
   clients: Client[];
   checklistItems: ChecklistItem[];
@@ -356,6 +366,7 @@ export interface AppState {
   hiddenTiles: string[];
   tileSizes: { [key: string]: 'small' | 'medium' | 'large' };
   tileOrder: string[] | null;
+  documentTemplates: DocumentTemplate[];
   isLoading: boolean;
   
   fetchInitialData: () => Promise<void>;
@@ -455,6 +466,10 @@ export interface AppState {
   addSavingsGoal: (goal: Omit<SavingsGoal, 'id'>) => Promise<void>;
   updateSavingsGoal: (id: string, goal: Partial<SavingsGoal>) => Promise<void>;
   deleteSavingsGoal: (id: string) => Promise<void>;
+
+  addDocumentTemplate: (template: Omit<DocumentTemplate, 'id'>) => Promise<void>;
+  updateDocumentTemplate: (id: string, template: Partial<DocumentTemplate>) => Promise<void>;
+  deleteDocumentTemplate: (id: string) => Promise<void>;
 
   restoreData: (data: Partial<AppState>) => void;
 }

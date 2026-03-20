@@ -8,6 +8,7 @@ interface BackButtonProps {
   variant?: 'glass' | 'minimal' | 'solid';
   className?: string;
   iconSize?: number;
+  onClick?: () => void;
 }
 
 export const BackButton: React.FC<BackButtonProps> = ({ 
@@ -15,16 +16,25 @@ export const BackButton: React.FC<BackButtonProps> = ({
   label, 
   variant = 'glass',
   className = '',
-  iconSize = 8
+  iconSize = 8,
+  onClick
 }) => {
   const navigate = useNavigate();
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    } else {
+      navigate(to);
+    }
+  };
 
   const iconClass = `w-${iconSize} h-${iconSize}`;
 
   if (variant === 'minimal') {
     return (
       <button 
-        onClick={() => navigate(to)}
+        onClick={handleClick}
         className={`flex items-center gap-2 text-zinc-400 hover:text-white transition-colors group ${className}`}
         aria-label={label || "Voltar"}
       >
@@ -37,7 +47,7 @@ export const BackButton: React.FC<BackButtonProps> = ({
   if (variant === 'solid') {
     return (
       <button 
-        onClick={() => navigate(to)}
+        onClick={handleClick}
         className={`p-3 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 rounded-2xl transition-all active:scale-95 ${className}`}
         aria-label={label || "Voltar"}
       >
@@ -48,7 +58,7 @@ export const BackButton: React.FC<BackButtonProps> = ({
 
   return (
     <button 
-      onClick={() => navigate(to)}
+      onClick={handleClick}
       className={`p-4 bg-white/10 hover:bg-white/20 rounded-2xl transition-all text-white border border-white/10 backdrop-blur-md shadow-xl active:scale-95 ${className}`}
       aria-label={label || "Voltar"}
     >

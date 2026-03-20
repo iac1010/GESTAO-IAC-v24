@@ -283,41 +283,59 @@ export default function Calendar() {
           .rbc-month-view, .rbc-time-view, .rbc-header { border: none !important; }
           .rbc-month-view { 
             background: white !important; 
-            border-radius: 40px !important; 
-            padding: 20px !important;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02) !important;
+            border-radius: 30px !important; 
+            border: 1px solid #e4e4e7 !important;
+            overflow: hidden !important;
+            display: flex !important;
+            flex-direction: column !important;
+            flex: 1 !important;
+            width: 100% !important;
           }
           .rbc-month-row { 
-            border: none !important; 
-            margin-bottom: 10px !important;
+            border-top: 1px solid #f4f4f5 !important;
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+          }
+          .rbc-month-row:first-of-type {
+            border-top: none !important;
           }
           .rbc-day-bg { 
-            border: 1px solid #f4f4f5 !important; 
-            border-radius: 24px !important;
-            margin: 4px !important;
-            transition: all 0.3s ease !important;
+            border-left: 1px solid #f4f4f5 !important; 
             background: #fafafa !important;
           }
-          .rbc-day-bg:hover { 
-            background: white !important;
-            border-color: #e4e4e7 !important;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.04) !important;
-            transform: translateY(-2px);
+          .rbc-day-bg:first-of-type {
+            border-left: none !important;
           }
-          .rbc-today { background-color: #f0f9ff !important; border-color: #bae6fd !important; }
+          .rbc-day-bg:hover { 
+            background: #fdfdfd !important;
+          }
+          .rbc-today { background-color: #f0f9ff !important; }
           
           .rbc-header { 
-            padding: 15px 8px !important; 
-            font-size: 0.75rem !important; 
-            font-weight: 900 !important; 
-            color: #a1a1aa !important;
-            background: transparent !important;
-            border: none !important;
+            padding: 12px 0 !important; 
+            font-size: 0.7rem !important; 
+            font-weight: 800 !important; 
+            color: #71717a !important;
+            background: #f8fafc !important;
+            border-left: 1px solid #f1f5f9 !important;
+            border-bottom: 1px solid #f1f5f9 !important;
             text-transform: uppercase;
-            letter-spacing: 0.25em;
+            letter-spacing: 0.1em;
+          }
+          .rbc-header:first-of-type {
+            border-left: none !important;
           }
           
-          .rbc-month-header { border: none !important; margin-bottom: 10px; }
+          .rbc-month-header { border: none !important; }
+          .rbc-date-cell { 
+            padding: 8px !important; 
+            font-size: 0.85rem !important; 
+            font-weight: 700 !important;
+            color: #3f3f46 !important;
+          }
+          .rbc-off-range { opacity: 0.3 !important; }
+          .rbc-off-range-bg { background: #f4f4f5 !important; }
 
           .rbc-toolbar { display: none !important; }
           
@@ -415,26 +433,44 @@ export default function Calendar() {
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="space-y-6">
             <div className="space-y-3">
               <label className="block text-sm font-bold uppercase tracking-[0.2em] text-white/30 ml-1">Início</label>
-              <input 
-                type="datetime-local" 
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 focus:border-white/30 rounded-2xl px-6 py-4 outline-none transition-all text-white text-lg"
-                required
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <input 
+                  type="date" 
+                  value={startDate.split('T')[0]}
+                  onChange={(e) => setStartDate(`${e.target.value}T${startDate.split('T')[1] || '09:00'}`)}
+                  className="w-full bg-white/5 border border-white/10 focus:border-white/30 rounded-2xl px-6 py-4 outline-none transition-all text-white text-lg"
+                  required
+                />
+                <input 
+                  type="time" 
+                  value={startDate.split('T')[1]}
+                  onChange={(e) => setStartDate(`${startDate.split('T')[0]}T${e.target.value}`)}
+                  className="w-full bg-white/5 border border-white/10 focus:border-white/30 rounded-2xl px-6 py-4 outline-none transition-all text-white text-lg"
+                  required
+                />
+              </div>
             </div>
             <div className="space-y-3">
               <label className="block text-sm font-bold uppercase tracking-[0.2em] text-white/30 ml-1">Término</label>
-              <input 
-                type="datetime-local" 
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 focus:border-white/30 rounded-2xl px-6 py-4 outline-none transition-all text-white text-lg"
-                required
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <input 
+                  type="date" 
+                  value={endDate.split('T')[0]}
+                  onChange={(e) => setEndDate(`${e.target.value}T${endDate.split('T')[1] || '10:00'}`)}
+                  className="w-full bg-white/5 border border-white/10 focus:border-white/30 rounded-2xl px-6 py-4 outline-none transition-all text-white text-lg"
+                  required
+                />
+                <input 
+                  type="time" 
+                  value={endDate.split('T')[1]}
+                  onChange={(e) => setEndDate(`${endDate.split('T')[0]}T${e.target.value}`)}
+                  className="w-full bg-white/5 border border-white/10 focus:border-white/30 rounded-2xl px-6 py-4 outline-none transition-all text-white text-lg"
+                  required
+                />
+              </div>
             </div>
           </div>
 

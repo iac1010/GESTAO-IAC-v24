@@ -16,6 +16,7 @@ export default function Quotes() {
   const { clients, quotes, products, addQuote, updateQuote, deleteQuote, addReceipt, companyLogo, companyData, companySignature } = useStore();
   
   const [isCreating, setIsCreating] = useState(false);
+  const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
   const [viewingQuote, setViewingQuote] = useState<Quote | null>(null);
   const [clientId, setClientId] = useState('');
   const [items, setItems] = useState<QuoteItem[]>([]);
@@ -100,18 +101,29 @@ export default function Quotes() {
       return;
     }
 
-    addQuote({
-      clientId,
-      date: new Date().toISOString(),
-      items,
-      totalValue,
-      status: 'DRAFT'
-    });
+    if (editingQuote) {
+      updateQuote(editingQuote.id, {
+        ...editingQuote,
+        clientId,
+        items,
+        totalValue,
+      });
+      alert('Orçamento atualizado com sucesso!');
+    } else {
+      addQuote({
+        clientId,
+        date: new Date().toISOString(),
+        items,
+        totalValue,
+        status: 'DRAFT'
+      });
+      alert('Orçamento salvo com sucesso!');
+    }
 
-    alert('Orçamento salvo com sucesso!');
     setClientId('');
     setItems([]);
     setIsCreating(false);
+    setEditingQuote(null);
   };
 
   const handleStatusChange = (quote: Quote, newStatus: Quote['status']) => {
@@ -295,6 +307,18 @@ export default function Quotes() {
                       
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
+                          onClick={() => {
+                            setEditingQuote(quote);
+                            setClientId(quote.clientId);
+                            setItems(quote.items);
+                            setIsCreating(true);
+                          }}
+                          className="p-2 text-white/40 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition-colors"
+                          title="Editar"
+                        >
+                          <Wrench className="w-4 h-4" />
+                        </button>
+                        <button 
                           onClick={() => setViewingQuote(quote)}
                           className="p-2 text-white/40 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                           title="Visualizar"
@@ -352,10 +376,21 @@ export default function Quotes() {
           >
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
               <div className="flex items-center gap-6">
-                <BackButton />
+                <BackButton onClick={() => {
+                  if (isCreating) {
+                    setIsCreating(false);
+                    setEditingQuote(null);
+                    setClientId('');
+                    setItems([]);
+                  }
+                }} />
                 <div>
-                  <h1 className="text-6xl font-light tracking-tight text-white">Nova Proposta</h1>
-                  <p className="text-xl opacity-60 mt-2 font-light">Configure os itens e o cliente</p>
+                  <h1 className="text-6xl font-light tracking-tight text-white">
+                    {editingQuote ? 'Editar Proposta' : 'Nova Proposta'}
+                  </h1>
+                  <p className="text-xl opacity-60 mt-2 font-light">
+                    {editingQuote ? `Editando orçamento #${editingQuote.id.substring(0, 8)}` : 'Configure os itens e o cliente'}
+                  </p>
                 </div>
               </div>
               <button 
