@@ -23,7 +23,7 @@ export default function Login() {
 
     // Windows 8 style login usually has a small delay
     setTimeout(() => {
-      const success = login('admin', password);
+      const success = login('iac', password);
       if (!success) {
         setError(true);
         setLoading(false);
@@ -98,7 +98,7 @@ export default function Login() {
         </form>
 
         {/* Hint */}
-        <p className="mt-8 text-white/40 text-sm font-medium">Dica: admin / 123</p>
+        <p className="mt-8 text-white/40 text-sm font-medium">Dica: iac / iac2010</p>
       </motion.div>
 
       {/* Bottom Icons */}

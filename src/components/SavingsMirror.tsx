@@ -6,9 +6,10 @@ import { Target, CheckCircle2 } from 'lucide-react';
 interface SavingsMirrorProps {
   goals: SavingsGoal[];
   className?: string;
+  hideFooter?: boolean;
 }
 
-export function SavingsMirror({ goals, className = "" }: SavingsMirrorProps) {
+export function SavingsMirror({ goals, className = "", hideFooter = false }: SavingsMirrorProps) {
   const activeGoals = goals.filter(g => g.status === 'IN_PROGRESS').slice(0, 3);
   
   return (
@@ -16,7 +17,7 @@ export function SavingsMirror({ goals, className = "" }: SavingsMirrorProps) {
       {/* Glass Shine Effect */}
       <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/10 to-transparent pointer-events-none"></div>
       
-      <div className="flex flex-col gap-4 relative z-10">
+      <div className="flex flex-col gap-3 relative z-10">
         {activeGoals.length > 0 ? (
           activeGoals.map((goal, idx) => {
             const progress = Math.min(100, (goal.currentAmount / goal.targetAmount) * 100);
@@ -45,13 +46,15 @@ export function SavingsMirror({ goals, className = "" }: SavingsMirrorProps) {
         )}
       </div>
       
-      <div className="mt-4 flex items-center gap-2.5 px-1 relative z-10">
-        <div className="relative">
-          <div className="w-2 h-2 rounded-full bg-amber-400 animate-ping absolute inset-0" />
-          <div className="w-2 h-2 rounded-full bg-amber-400 relative" />
+      {!hideFooter && (
+        <div className="mt-4 flex items-center gap-2.5 px-1 relative z-10">
+          <div className="relative">
+            <div className="w-2 h-2 rounded-full bg-amber-400 animate-ping absolute inset-0" />
+            <div className="w-2 h-2 rounded-full bg-amber-400 relative" />
+          </div>
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">Objetivos Live</span>
         </div>
-        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">Objetivos Live</span>
-      </div>
+      )}
     </div>
   );
 }

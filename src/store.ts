@@ -528,7 +528,7 @@ export const useStore = create<AppState>()(
       },
       
       login: (user, pass) => {
-        if (user === 'admin' && pass === '123') {
+        if (user === 'iac' && pass === 'iac2010') {
           set({ isAuthenticated: true });
           // Ao fazer login, busca os dados do Supabase
           get().fetchInitialData();

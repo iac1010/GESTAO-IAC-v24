@@ -288,13 +288,14 @@ export default function Dashboard() {
       id: 'financial',
       type: 'wide',
       component: (
-        <Link to="/financial" className="w-full h-full bg-gradient-to-br from-[#22b14c] to-[#1a943d] hover:brightness-110 transition-all p-5 flex flex-col justify-between group relative overflow-hidden border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] active:scale-95">
+        <Link to="/financial" className="w-full h-full bg-gradient-to-br from-[#22b14c] to-[#1a943d] hover:brightness-110 transition-all p-4 flex flex-col justify-between group relative overflow-hidden border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] active:scale-95">
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/20 pointer-events-none" />
           
-          <div className="flex-1 flex items-center justify-center relative z-10">
+          <div className="flex-1 flex items-center justify-center relative z-10 overflow-hidden">
             <CostsMirror 
               costs={costs} 
-              className="!p-0 !bg-transparent !border-none !shadow-none !rounded-none w-full max-w-[280px]" 
+              className="!p-0 !bg-transparent !border-none !shadow-none !rounded-none w-full max-w-[260px]" 
+              hideFooter={true}
             />
           </div>
 
@@ -486,14 +487,14 @@ export default function Dashboard() {
       id: 'kanban',
       type: 'wide',
       component: (
-        <Link to="/kanban" className="w-full h-full bg-gradient-to-br from-[#60a917] to-[#4d8712] hover:brightness-110 transition-all p-5 flex flex-col justify-between group relative overflow-hidden border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] active:scale-95">
+        <Link to="/kanban" className="w-full h-full bg-gradient-to-br from-[#60a917] to-[#4d8712] hover:brightness-110 transition-all p-4 flex flex-col justify-between group relative overflow-hidden border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] active:scale-95">
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/20 pointer-events-none" />
           
-          <div className="flex-1 flex items-center justify-center relative z-10">
+          <div className="flex-1 flex items-center justify-center relative z-10 overflow-hidden">
             <KanbanMirror 
               tickets={tickets} 
               showLabel={false} 
-              className="!p-0 !bg-transparent !border-none !shadow-none !rounded-none w-full max-w-[280px]" 
+              className="!p-0 !bg-transparent !border-none !shadow-none !rounded-none w-full max-w-[260px]" 
             />
           </div>
 
@@ -589,14 +590,15 @@ export default function Dashboard() {
       component: (
         <div 
           onClick={() => navigate('/accountability')}
-          className="w-full h-full bg-gradient-to-br from-[#4e44ce] to-[#3b3399] hover:brightness-110 transition-all p-5 flex flex-col justify-between group relative overflow-hidden border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] active:scale-95 cursor-pointer"
+          className="w-full h-full bg-gradient-to-br from-[#4e44ce] to-[#3b3399] hover:brightness-110 transition-all p-4 flex flex-col justify-between group relative overflow-hidden border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] active:scale-95 cursor-pointer"
         >
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/20 pointer-events-none" />
           
-          <div className="flex-1 flex items-center justify-center relative z-10">
+          <div className="flex-1 flex items-center justify-center relative z-10 overflow-hidden">
             <CostsMirror 
               costs={costs} 
-              className="!p-0 !bg-transparent !border-none !shadow-none !rounded-none w-full max-w-[280px]" 
+              className="!p-0 !bg-transparent !border-none !shadow-none !rounded-none w-full max-w-[260px]" 
+              hideFooter={true}
             />
           </div>
 
@@ -640,10 +642,11 @@ export default function Dashboard() {
         <Link to="/receipts" className="w-full h-full bg-gradient-to-br from-[#f59e0b] to-[#d97706] hover:brightness-110 transition-all p-4 flex flex-col justify-between group relative overflow-hidden border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] active:scale-95">
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/20 pointer-events-none" />
           
-          <div className="flex-1 flex items-center justify-center relative z-10">
+          <div className="flex-1 flex items-center justify-center relative z-10 overflow-hidden">
             <ReceiptsMirror 
               receipts={receipts} 
               className="!p-0 !bg-transparent !border-none !shadow-none !rounded-none w-full" 
+              hideFooter={true}
             />
           </div>
 
@@ -798,13 +801,14 @@ export default function Dashboard() {
       id: 'savings-goals',
       type: 'wide',
       component: (
-        <Link to="/accountability?tab=goals" className="w-full h-full bg-gradient-to-br from-[#059669] to-[#047857] hover:brightness-110 transition-all p-5 flex flex-col justify-between group relative overflow-hidden border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] active:scale-95">
+        <Link to="/accountability?tab=goals" className="w-full h-full bg-gradient-to-br from-[#059669] to-[#047857] hover:brightness-110 transition-all p-4 flex flex-col justify-between group relative overflow-hidden border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] active:scale-95">
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/20 pointer-events-none" />
           
-          <div className="flex-1 flex items-center justify-center relative z-10">
+          <div className="flex-1 flex items-center justify-center relative z-10 overflow-hidden">
             <SavingsMirror 
               goals={savingsGoals} 
-              className="!p-0 !bg-transparent !border-none !shadow-none !rounded-none w-full max-w-[280px]" 
+              className="!p-0 !bg-transparent !border-none !shadow-none !rounded-none w-full max-w-[260px]" 
+              hideFooter={true}
             />
           </div>
 
@@ -837,14 +841,15 @@ export default function Dashboard() {
       id: 'water-management',
       type: 'wide',
       component: (
-        <Link to="/consumption" className="w-full h-full bg-gradient-to-br from-[#2563eb] to-[#1e40af] hover:brightness-110 transition-all p-5 flex flex-col justify-between group relative overflow-hidden border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] active:scale-95">
+        <Link to="/consumption" className="w-full h-full bg-gradient-to-br from-[#2563eb] to-[#1e40af] hover:brightness-110 transition-all p-4 flex flex-col justify-between group relative overflow-hidden border border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3)] active:scale-95">
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/20 pointer-events-none" />
           
-          <div className="flex-1 flex items-center justify-center relative z-10">
+          <div className="flex-1 flex items-center justify-center relative z-10 overflow-hidden">
             <WaterManagementMirror 
               readings={consumptionReadings} 
               events={criticalEvents}
-              className="!p-0 !bg-transparent !border-none !shadow-none !rounded-none w-full max-w-[280px]" 
+              className="!p-0 !bg-transparent !border-none !shadow-none !rounded-none w-full max-w-[260px]" 
+              hideFooter={true}
             />
           </div>
 
@@ -1007,16 +1012,6 @@ export default function Dashboard() {
         </svg>
       </div>
 
-      <div className="flex justify-center mb-8 relative z-10">
-        {companyLogo ? (
-          <img src={companyLogo} alt="Logo" className="h-20 w-auto object-contain drop-shadow-2xl" />
-        ) : (
-          <div className="p-4 bg-white/10 rounded-full backdrop-blur-md border border-white/20">
-            <Database className="w-12 h-12 text-white/60" />
-          </div>
-        )}
-      </div>
-
       <header className="mb-12 flex justify-between items-start relative z-10">
         <h1 className="text-6xl font-light tracking-tight text-white">Iniciar</h1>
         <div className="flex items-center gap-6">
@@ -1027,6 +1022,13 @@ export default function Dashboard() {
             {theme === 'dark' ? <SunIcon className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
           </button>
           <div className="text-right">
+            {companyLogo ? (
+              <img src={companyLogo} alt="Logo" className="w-16 h-16 rounded-full object-cover border-2 border-white/20 mb-2 ml-auto" />
+            ) : (
+              <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center text-white/60 mb-2 ml-auto">
+                <Database className="w-8 h-8" />
+              </div>
+            )}
             <p className="text-xl font-medium text-white">Administrador</p>
             <p className="text-sm text-white/60 font-medium">IA COMPANY TEC</p>
             <button 

@@ -6,9 +6,10 @@ import { TrendingDown, DollarSign } from 'lucide-react';
 interface CostsMirrorProps {
   costs: Cost[];
   className?: string;
+  hideFooter?: boolean;
 }
 
-export function CostsMirror({ costs, className = "" }: CostsMirrorProps) {
+export function CostsMirror({ costs, className = "", hideFooter = false }: CostsMirrorProps) {
   const recentCosts = [...costs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 4);
   const maxAmount = Math.max(...recentCosts.map(c => c.value), 1);
   
@@ -51,13 +52,15 @@ export function CostsMirror({ costs, className = "" }: CostsMirrorProps) {
         )}
       </div>
       
-      <div className="mt-4 flex items-center gap-2.5 px-1 relative z-10">
-        <div className="relative">
-          <div className="w-2 h-2 rounded-full bg-rose-500 animate-ping absolute inset-0" />
-          <div className="w-2 h-2 rounded-full bg-rose-500 relative" />
+      {!hideFooter && (
+        <div className="mt-4 flex items-center gap-2.5 px-1 relative z-10">
+          <div className="relative">
+            <div className="w-2 h-2 rounded-full bg-rose-500 animate-ping absolute inset-0" />
+            <div className="w-2 h-2 rounded-full bg-rose-500 relative" />
+          </div>
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">Fluxo de Saída</span>
         </div>
-        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">Fluxo de Saída</span>
-      </div>
+      )}
     </div>
   );
 }

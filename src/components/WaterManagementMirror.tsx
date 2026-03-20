@@ -7,9 +7,10 @@ interface WaterManagementMirrorProps {
   readings: ConsumptionReading[];
   events: CriticalEvent[];
   className?: string;
+  hideFooter?: boolean;
 }
 
-export function WaterManagementMirror({ readings, events, className = "" }: WaterManagementMirrorProps) {
+export function WaterManagementMirror({ readings, events, className = "", hideFooter = false }: WaterManagementMirrorProps) {
   // Calculate today's water consumption
   const today = new Date().toISOString().split('T')[0];
   const todayWater = readings
@@ -30,7 +31,7 @@ export function WaterManagementMirror({ readings, events, className = "" }: Wate
       {/* Glass Shine Effect */}
       <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/10 to-transparent pointer-events-none"></div>
       
-      <div className="flex flex-col gap-4 relative z-10">
+      <div className="flex flex-col gap-3 relative z-10">
         {/* Water Level Indicator */}
         <div className="flex items-center gap-4">
           <div className="relative w-12 h-12 rounded-2xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center overflow-hidden shrink-0">
@@ -86,13 +87,15 @@ export function WaterManagementMirror({ readings, events, className = "" }: Wate
         </div>
       </div>
       
-      <div className="mt-4 flex items-center gap-2.5 px-1 relative z-10">
-        <div className="relative">
-          <div className="w-2 h-2 rounded-full bg-blue-400 animate-ping absolute inset-0" />
-          <div className="w-2 h-2 rounded-full bg-blue-400 relative" />
+      {!hideFooter && (
+        <div className="mt-4 flex items-center gap-2.5 px-1 relative z-10">
+          <div className="relative">
+            <div className="w-2 h-2 rounded-full bg-blue-400 animate-ping absolute inset-0" />
+            <div className="w-2 h-2 rounded-full bg-blue-400 relative" />
+          </div>
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">Gestão Hídrica Smart</span>
         </div>
-        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50">Gestão Hídrica Smart</span>
-      </div>
+      )}
     </div>
   );
 }
