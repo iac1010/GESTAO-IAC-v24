@@ -309,7 +309,7 @@ export default function Dashboard() {
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] drop-shadow-md">Financeiro</span>
                 <div className="flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-[8px] font-bold text-white/50 uppercase tracking-widest">Pasta Digital Ativa</span>
+                  <span className="text-[8px] font-bold text-white/50 uppercase tracking-widest">Inteligência Ativa</span>
                 </div>
               </div>
             </div>

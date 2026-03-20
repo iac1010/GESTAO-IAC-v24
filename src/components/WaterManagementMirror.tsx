@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Droplets, Zap, Activity, Waves } from 'lucide-react';
 import { ConsumptionReading, CriticalEvent } from '../types';
 

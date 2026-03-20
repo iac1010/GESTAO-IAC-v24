@@ -4,7 +4,7 @@ import { TicketStatus, Ticket } from '../types';
 import { Link, useNavigate } from 'react-router-dom';
 import { Clock, Wrench, CheckCircle, AlertCircle, Calendar, User, Edit, Plus, MoreVertical, ExternalLink, X } from 'lucide-react';
 import { BackButton } from '../components/BackButton';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const COLUMNS: { id: TicketStatus; title: string; icon: any; color: string; glowColor: string }[] = [
   { id: 'APROVADO', title: 'Aprovado', icon: CheckCircle, color: 'text-blue-400', glowColor: 'shadow-blue-500/20' },

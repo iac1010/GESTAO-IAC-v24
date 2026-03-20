@@ -3,7 +3,7 @@ import { useStore } from '../store';
 import { CompanyData } from '../types';
 import { Upload, Trash2, Image as ImageIcon, Save, Download, Database, FileUp, ChevronUp, ChevronDown, Layout as LayoutIcon, Settings as SettingsIcon, Eye, EyeOff } from 'lucide-react';
 import { BackButton } from '../components/BackButton';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 
 export default function Settings() {

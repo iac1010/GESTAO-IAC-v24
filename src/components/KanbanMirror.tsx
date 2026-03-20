@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Ticket, TicketStatus } from '../types';
 
 const COLUMNS: { id: TicketStatus; color: string }[] = [

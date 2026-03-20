@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Receipt } from '../types';
 import { TrendingUp, FileCheck } from 'lucide-react';
 

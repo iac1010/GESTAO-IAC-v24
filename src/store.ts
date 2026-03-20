@@ -852,6 +852,19 @@ export const useStore = create<AppState>()(
           toast.error('Erro de conexão ao salvar recibo.');
         }
       },
+      updateReceipt: async (id, updated) => {
+        set((state) => ({
+          receipts: state.receipts.map(r => r.id === id ? { ...updated, id } : r)
+        }));
+        try {
+          await supabase.from('receipts').update({
+            client_id: updated.clientId,
+            description: updated.description,
+            value: updated.value,
+            date: updated.date
+          }).eq('id', id);
+        } catch (e) { console.error(e); }
+      },
       deleteReceipt: async (id) => {
         set((state) => ({ receipts: state.receipts.filter(r => r.id !== id) }));
         try {
@@ -882,6 +895,19 @@ export const useStore = create<AppState>()(
           console.error(e);
           toast.error('Erro de conexão ao salvar custo.');
         }
+      },
+      updateCost: async (id, updated) => {
+        set((state) => ({
+          costs: state.costs.map(c => c.id === id ? { ...updated, id } : c)
+        }));
+        try {
+          await supabase.from('costs').update({
+            description: updated.description,
+            value: updated.value,
+            date: updated.date,
+            category: updated.category
+          }).eq('id', id);
+        } catch (e) { console.error(e); }
       },
       deleteCost: async (id) => {
         set((state) => ({ costs: state.costs.filter(c => c.id !== id) }));

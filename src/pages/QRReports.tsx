@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { BackButton } from '../components/BackButton';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 
 export default function QRReports() {
   const navigate = useNavigate();

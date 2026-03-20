@@ -3,7 +3,7 @@ import { useStore } from '../store';
 import { Plus, Edit2, Trash2, Users, Phone, Mail, MapPin, FileText, User } from 'lucide-react';
 import { BackButton } from '../components/BackButton';
 import { Modal } from '../components/Modal';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
 const VIBRANT_GRADIENTS = [

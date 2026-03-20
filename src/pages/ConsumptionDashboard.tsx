@@ -32,7 +32,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 
 export default function ConsumptionDashboard() {
   const navigate = useNavigate();

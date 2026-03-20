@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Zap, Droplets, ShieldCheck, Power, Lock, Unlock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 

@@ -4,7 +4,7 @@ import { QuoteItem, Quote } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { Upload, Plus, Trash2, Save, FileSpreadsheet, CheckCircle, Clock, XCircle, FileText, Download, Eye, Send, Printer, Wrench } from 'lucide-react';
 import { BackButton } from '../components/BackButton';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Papa from 'papaparse';
 import { v4 as uuidv4 } from 'uuid';
 import { generatePdf } from '../utils/pdfGenerator';

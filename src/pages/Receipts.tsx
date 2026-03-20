@@ -4,7 +4,7 @@ import { Receipt } from '../types';
 import { Download, Printer, FileText, FileCheck, Calendar, DollarSign, User, Trash2, Search } from 'lucide-react';
 import { BackButton } from '../components/BackButton';
 import { generatePdf } from '../utils/pdfGenerator';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 

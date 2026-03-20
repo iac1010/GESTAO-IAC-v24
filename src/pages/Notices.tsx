@@ -16,7 +16,7 @@ import {
   X
 } from 'lucide-react';
 import { BackButton } from '../components/BackButton';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';

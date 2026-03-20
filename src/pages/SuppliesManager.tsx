@@ -21,7 +21,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { Modal } from '../components/Modal';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { BackButton } from '../components/BackButton';
 import { format } from 'date-fns';

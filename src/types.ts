@@ -398,9 +398,11 @@ export interface AppState {
   deleteQuote: (id: string) => void;
 
   addReceipt: (receipt: Omit<Receipt, 'id'>) => void;
+  updateReceipt: (id: string, receipt: Omit<Receipt, 'id'>) => void;
   deleteReceipt: (id: string) => void;
 
   addCost: (cost: Omit<Cost, 'id'>) => void;
+  updateCost: (id: string, cost: Omit<Cost, 'id'>) => void;
   deleteCost: (id: string) => void;
 
   addAppointment: (appointment: Omit<Appointment, 'id'>) => void;

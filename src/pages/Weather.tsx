@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CloudSun, Sun, Droplets, Wind, MapPin, Settings, Thermometer, TrendingUp, ArrowRight, CloudRain, CloudLightning, CloudFog, Cloud } from 'lucide-react';
 import { BackButton } from '../components/BackButton';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 
 interface WeatherData {
   temp: number;

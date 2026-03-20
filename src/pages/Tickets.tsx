@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Trash2, Eye, Edit, Hammer, Clock, ShieldAlert, Bell, Wrench, ExternalLink, Filter, Search, Tag } from 'lucide-react';
 import { BackButton } from '../components/BackButton';
 import { Modal } from '../components/Modal';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Tickets() {
   const navigate = useNavigate();

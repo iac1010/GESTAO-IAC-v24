@@ -54,7 +54,7 @@ import {
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import jsPDF from 'jspdf';
 import { toPng } from 'html-to-image';
 

@@ -5,7 +5,7 @@ import { Plus, Trash2, Edit, FileSpreadsheet, Search, Package, Tag, Info } from 
 import { BackButton } from '../components/BackButton';
 import Papa from 'papaparse';
 import { Modal } from '../components/Modal';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
 const VIBRANT_GRADIENTS = [

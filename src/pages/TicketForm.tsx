@@ -4,7 +4,7 @@ import { useStore } from '../store';
 import { TicketType, TicketStatus } from '../types';
 import { Save, X, ClipboardList, Info, Wrench, ShieldAlert, Clock, CheckCircle2, AlertCircle, HelpCircle, Camera, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { BackButton } from '../components/BackButton';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { MAINTENANCE_CATEGORIES } from '../constants/maintenance';
 
 export default function TicketForm() {

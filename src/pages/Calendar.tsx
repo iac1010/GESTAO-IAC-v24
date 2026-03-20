@@ -8,7 +8,7 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { Plus, Calendar as CalendarIcon, Clock, AlignLeft, X, Info, CalendarDays, MapPin, User, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BackButton } from '../components/BackButton';
 import { v4 as uuidv4 } from 'uuid';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { Modal } from '../components/Modal';
 
@@ -44,15 +44,15 @@ const CalendarEvent = ({ event }: any) => {
 const MonthDateHeader = ({ label, date, onDrillDown }: any) => {
   const isToday = format(date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
   return (
-    <div className="flex justify-center p-2">
+    <div className="flex justify-center p-1">
       <button 
         type="button"
         onClick={onDrillDown}
         className={`
-          w-10 h-10 flex items-center justify-center rounded-2xl text-sm font-black transition-all
+          w-8 h-8 flex items-center justify-center rounded-xl text-xs font-bold transition-all
           ${isToday 
             ? 'bg-zinc-900 text-white shadow-lg scale-110' 
-            : 'hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900'}
+            : 'hover:bg-zinc-100 text-zinc-800 hover:text-zinc-900'}
         `}
       >
         {label}
